@@ -1,0 +1,5 @@
+EVENTS = "events"
+USERS = "users"
+BILLS = "bills"
+EXPENSES = "expenses"
+USER_BILLS = "user_bills"
