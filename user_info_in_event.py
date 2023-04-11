@@ -1,5 +1,5 @@
 class UserInfoInEvent:
-    def __init__(self, expenses, user_bills):
+    def __init__(self, expenses, user_bills) -> None:
         
         """Initialization Function for the User Info Class
         

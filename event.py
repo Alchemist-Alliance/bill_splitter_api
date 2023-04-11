@@ -2,7 +2,7 @@ from user_info_in_event import UserInfoInEvent
 from constant import EXPENSES, USER_BILLS
 
 class Event:
-    def __init__(self, key, name, users, users_info, bills, owner, is_active):
+    def __init__(self, key, name, users, users_info, bills, owner, is_active) -> None:
         """Initialization Function for the Event Class
 
         Args:
