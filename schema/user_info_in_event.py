@@ -14,15 +14,15 @@ class UserInfoInEvent:
         """
 
 
-        if expenses == None or not isinstance(expenses, float):
-            raise TypeError("expenses should be Float and not Null")
-        else:
-            self.expenses = expenses
+        # if expenses == None or not isinstance(expenses, float):
+        #     raise TypeError("expenses should be Float and not Null")
+        # else:
+        #     self.expenses = expenses
 
 
-        if user_bills == None or not isinstance(user_bills, list):
-            raise TypeError("bills should be a list and not Null")
-        elif not all(isinstance(bill, str) for bill in user_bills):
-            raise TypeError("Each billKey in user_bills list should be a string")
-        else:
-            self.user_bills = user_bills
+        # if user_bills == None or not isinstance(user_bills, list):
+        #     raise TypeError("bills should be a list and not Null")
+        # elif not all(isinstance(bill, str) for bill in user_bills):
+        #     raise TypeError("Each billKey in user_bills list should be a string")
+        # else:
+        #     self.user_bills = user_bills

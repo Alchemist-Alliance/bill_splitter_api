@@ -1,0 +1,14 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "version": "1.0.0",
+        "title": "The Backend API for Bill Splitter Application"
+    },
+
+    "tags": [
+        {
+          "name": "Test API",
+          "description": "Test API"
+        }
+      ]
+}
