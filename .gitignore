@@ -1,3 +1,5 @@
 venv/
 .env
 __pychahe__/
+scheme/__pychahe__/
+backend/__pychahe__/

@@ -1,4 +1,3 @@
-from schema.user_info_in_event import UserInfoInEvent
 from constant import EXPENSES, USER_BILLS, KEY, NAME, USERS, BILLS, OWNER, IS_ACTIVE
 
 class Event:
@@ -20,9 +19,11 @@ class Event:
             TypeError: If the [Name] of [Event] is Null or different datatype than [String]
             TypeError: If The List of [Users] is Null or different datatype than [List]
             TypeError: If all the list items of [Users] are not of [String] datatype
-            TypeError: If the [Expenses] of user is Null or different datatype than [Float]
+            TypeError: If The List of [Expenses] is Null or different datatype than [List]
+            TypeError: If all the list items of [Expenses] are not of [Float] datatype
             TypeError: If The List of [User_Bills] is Null or different datatype than [List]
             TypeError: If all the list items of [User_Bills] are not of [String] datatype
+            TypeError: If all the length of [Expenses] and [User_Bills] is not equal to length of [Users]
             TypeError: If The List of [Bills] is Null or different datatype than [List]
             TypeError: If all the list items of [Bills] are not of [String] datatype
             TypeError: If the [Owner] of [Event] is Null or different datatype than [String]
@@ -50,22 +51,24 @@ class Event:
             self.users = users
 
 
-        if expenses == None or not isinstance(expenses, float):
-            raise TypeError("expenses should be Float and not Null")
+        if expenses == None or not isinstance(expenses, list):
+            raise TypeError("expenses should be list and not Null")
+        elif not all(isinstance(expense, float) for expense in expenses):
+            raise TypeError("Each Expense in Expenses list should be a float")
         else:
             self.expenses = expenses
 
 
         if user_bills == None or not isinstance(user_bills, list):
             raise TypeError("bills should be a list and not Null")
-        elif not all(isinstance(bill, str) for bill in user_bills):
-            raise TypeError("Each billKey in user_bills list should be a string")
+        elif not all(isinstance(user_bill, list) or not all(isinstance(bill, str) for bill in user_bill) for user_bill in user_bills):
+            raise TypeError("Each user_bill in user_bills list should be a list of bills which are string")
         else:
             self.user_bills = user_bills
 
 
         if len(users) != len(expenses) or len(users) != len(user_bills):
-            raise TypeError("The Length of Users List and Users_Info List must be Same")
+            raise TypeError("The Length of Users List, Expenses and Users_Info List must be Same")
 
 
         if bills == None or not isinstance(bills, list):

@@ -1,4 +1,4 @@
-from constant import deta, KEY, NAME, USERS, USERS_INFO, BILLS, OWNER, IS_ACTIVE, EVENT_BASE
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, IS_ACTIVE, EVENT_BASE, EXPENSES, USER_BILLS
 from schema.event import Event
 
 def create_event_in_database(data):
@@ -6,7 +6,8 @@ def create_event_in_database(data):
             key = data[KEY],
             name=data[NAME],
             users=data[USERS],
-            users_info=data[USERS_INFO],
+            expenses=data[EXPENSES],
+            user_bills=data[USER_BILLS],
             bills=data[BILLS],
             owner=data[OWNER],
             is_active=data[IS_ACTIVE]
