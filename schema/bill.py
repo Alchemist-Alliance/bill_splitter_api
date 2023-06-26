@@ -13,7 +13,6 @@ class Bill:
             drawees (List[String]): The List of Users(Index) which are billed
             payees (List[String]): The List of Users(Index) which paid the bill
             contributions (Lis[String]): The List of Amount Paid by each payee
-            user_count (Integer): The total no of users part of the event
             notes (String): Any Specific notes for the bill
 
 
@@ -85,8 +84,8 @@ class Bill:
         
         if user_count == None or not isinstance(user_count, int):
             raise TypeError("User_Count should be int and not Null")
-        else:
-            self.user_count = user_count
+        # else:
+        #     self.user_count = user_count
             
         if not isinstance(notes,str):
             notes = str(notes)
@@ -102,7 +101,7 @@ class Bill:
             DRAWEES : self.drawees,
             PAYEES : self.payees,
             CONTRIBUTIONS : self.contributions,
-            USER_COUNT : self.user_count,
+            # USER_COUNT : self.user_count,
             NOTES : self.notes,
         }
         return bill_dict
