@@ -2,7 +2,7 @@ from flask import Flask, request, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
 from backend.user_backend import *
 from backend.event_backend import *
-from constant import KEY, EVENT_KEY, OWNER, USER, INVITE_INDEX, IS_ACCEPTED
+from constant import KEY, EVENT_KEY, OWNER, USER_KEY, IS_ACCEPTED, NAME, INDEX, OWNER_NAME
 
 app = Flask(__name__)
 
@@ -68,7 +68,11 @@ def create_event():
     try:
         data = request.get_json()
         create_event_in_database(data)
-        add_event_to_user(user_key=data[OWNER], event_key=data[KEY])
+        add_new_user_to_event(event_key=data[KEY], user_name=data[OWNER_NAME])
+        
+        if is_event_active(event_key=data[KEY]):
+            add_event_to_user(user_key=data[OWNER], event_key=data[KEY], user_index=0)
+            make_user_permanent(event_key=data[KEY],user_key=data[OWNER], user_index=0)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -79,6 +83,24 @@ def create_event():
     return jsonify(success="Event Created!"), 200
 
 
+@app.route("/add_new_user", methods=['GET', 'POST'])
+def add_new_user():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+    
+    try:
+        data = request.get_json()
+        add_new_user_to_event(event_key=data[EVENT_KEY], user_name=data[NAME])
+        
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(success="User Added!"), 200
+
+
 @app.route("/send_invite", methods=['GET', 'POST'])
 def send_invite():
     if (not request.data):
@@ -86,11 +108,10 @@ def send_invite():
 
     try:
         data = request.get_json()
-        if (is_event_active(event_key=data[EVENT_KEY]) == False):
-            return jsonify(error="Event No Longer Active"), 400
-
-        flag = send_invite_to_user(
-            user_key=data[USER], event_key=data[EVENT_KEY])
+        check_event_before_inviting(event_key=data[EVENT_KEY], user_index=data[INDEX])
+        check_user_before_inviting(user_key=data[USER_KEY], event_key=data[EVENT_KEY])
+        mark_user_invited(user_key=data[USER_KEY], event_key=data[EVENT_KEY], user_index=data[INDEX])
+        send_invite_to_user(user_key=data[USER_KEY], event_key=data[EVENT_KEY], user_index=data[INDEX])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -98,7 +119,7 @@ def send_invite():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="User Already has Invitation") if flag == False else jsonify(success="Invitation Sent!"), 200
+    return jsonify(success="Invitation Sent!"), 200
 
 
 @app.route("/resolve_invite", methods=['GET', 'POST'])
@@ -109,25 +130,24 @@ def accept_invite():
     try:
         data = request.get_json()
 
-        event_key = check_invite(
-            user_key=data[USER], invite_index=data[INVITE_INDEX])
+        event = check_user_before_adding(user_key=data[USER_KEY], invite_index=data[INDEX])
+        check_event_before_adding(event_key=event[KEY],user_key=data[USER_KEY],user_index=event[INDEX])
 
-        if (data[IS_ACCEPTED] == True):
-            if (is_event_active(event_key=event_key) == False):
-                return jsonify(error="Event No Longer Active"), 400
-            add_event_to_user(user_key=data[OWNER], event_key=event_key)
+        if data[IS_ACCEPTED] == True:
+            add_event_to_user(user_key=data[USER_KEY], event_key=event[KEY], user_index=event[INDEX])
+            make_user_permanent(event_key=event[KEY],user_key=data[USER_KEY], user_index=event[INDEX])
 
-        delete_invite(user_key=data[USER], invite_index=data[INVITE_INDEX])
-
-    except IndexError as err:
-        return jsonify(error="Invalid Invite"), 400
+        make_user_uninvited(event_key=event[KEY], user_index=event[INDEX])
+        delete_invite(user_key=data[USER_KEY], invite_index=data[INDEX])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
 
     except KeyError as err:
         return jsonify(error=str(err)), 400
+    
+    return jsonify(success="User Added to Event"), 200 if data[IS_ACCEPTED] == True else jsonify(success="Invitaion Rejected"), 200
 
 
-# if __name__ == '__main__':
-#     app.run(debug=True)
+if __name__ == '__main__':
+    app.run(debug=True)

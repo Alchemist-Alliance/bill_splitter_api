@@ -1,17 +1,14 @@
-from constant import deta, KEY, NAME, USERS, BILLS, OWNER, USER_STATUSES, EVENT_BASE, EXPENSES, USER_BILLS, EVENT_STATUS
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS
 from schema.event import Event, UserStatus, EventStatus
 
-def create_event_in_database(data):
+def create_event_in_database(data) -> None:
     event = Event(
             key = data[KEY],
             name=data[NAME],
             users=data[USERS],
-            expenses=data[EXPENSES],
-            user_bills=data[USER_BILLS],
-            user_statuses=data[USER_STATUSES],
             bills=data[BILLS],
             owner=data[OWNER],
-            event_status=data[EVENT_STATUS]
+            status=data[STATUS]
         )
     event_dict = event.to_dict()
     events = deta.Base(EVENT_BASE)
@@ -21,48 +18,99 @@ def create_event_in_database(data):
 def is_event_active(event_key) -> bool:
     events = deta.Base(EVENT_BASE)
     event = events.get(event_key)
-    if(event is None):
+    if event is None:
         return False
-    return event[EVENT_STATUS] == EventStatus.ACTIVE.value
+    return event[STATUS] == EventStatus.ACTIVE.value
 
 
-def add_user_to_event(event_key) -> None:
+def add_new_user_to_event(event_key, user_name) -> None:
     events = deta.Base(EVENT_BASE)
     event = events.get(event_key)
-
-    event[USERS].append("temp")
-    event[EXPENSES].append(0.0)
-    event[USER_BILLS].append([])
-    event[USER_STATUSES].append(UserStatus.TEMPORARY.value)
     
-    events.update({
-            USERS:event[USERS], 
-            EXPENSES: event[EXPENSES], 
-            USER_BILLS: event[USER_BILLS], 
-            USER_STATUSES: event[USER_STATUSES]
-        },event_key)
+    if event is None or event[STATUS] == EventStatus.INACTIVE.value:
+        raise TypeError("Event is Inactive or does not exist")
+    
+    user = {
+        NAME : user_name,
+        KEY : str(len(event[USERS])),
+        EXPENSES : 0.0,
+        BILLS : [],
+        STATUS : UserStatus.TEMPORARY.value
+    }
 
-
-def update_invited_user(event_key, user_key, user_index) -> None:
-    events = deta.Base(EVENT_BASE)
-    event = events.get(event_key)
-    event[USERS][user_index] = user_key
+    event[USERS].append(user)
+    
     events.update({
             USERS:event[USERS]
         },event_key)
 
 
-def make_user_permanent(event_key, user_key) -> None:
+def check_event_before_inviting(event_key, user_index) -> None:
     events = deta.Base(EVENT_BASE)
     event = events.get(event_key)
     
-    user_count = len(event[USERS])
-    for index in range(0, user_count):
-        if event[USERS][index] == user_key and event[USER_STATUSES][index] == UserStatus.TEMPORARY.value:
-            event[USER_STATUSES][index] = UserStatus.PERMANENT.value
+    if event is None:
+        raise TypeError("No Such Event Exists")
+    
+    if event[STATUS] == EventStatus.INACTIVE.value:
+        raise TypeError("The Event is Inactive")
+    elif event[STATUS] == EventStatus.TEMPORARY.value:
+        raise TypeError("Temporary Events can't invite users")
+    
+    if user_index < 0 or user_index >= len(event[USERS]):
+        raise TypeError(f"Invalid Invite, index must be in the range of 0 to {len(event[USERS]) - 1}")
+    if event[USERS][user_index][STATUS] != UserStatus.TEMPORARY.value:
+        raise TypeError("The index provided is not of a temporary user")
+    if event[USERS][user_index][KEY] != str(user_index):
+        raise TypeError("This index is not free for user invite")
+
+
+def mark_user_invited(event_key, user_key, user_index) -> None:
+    events = deta.Base(EVENT_BASE)
+    event = events.get(event_key)
+    
+    event[USERS][user_index][KEY] = user_key
     events.update({
-            USER_STATUSES: event[USER_STATUSES]
-        },event_key)        
+            USERS:event[USERS]
+        },event_key)
+
+
+def check_event_before_adding(event_key, user_key, user_index) -> None:
+    events = deta.Base(EVENT_BASE)
+    event = events.get(event_key)
+    
+    if event[STATUS] == EventStatus.INACTIVE.value:
+        raise TypeError("The Event is Inactive")
+    elif event[STATUS] == EventStatus.TEMPORARY.value:
+        raise TypeError("Temporary Events can't add users")
+    
+    if user_index < 0 or user_index >= len(event[USERS]):
+        raise TypeError(f"Invalid Invite, index must be in the range of 0 to {len(event[USERS]) - 1}")
+    if event[USERS][user_index][STATUS] != UserStatus.TEMPORARY.value:
+        raise TypeError("The index provided is not of a temporary user")
+    if event[USERS][user_index][KEY] != user_key:
+        raise TypeError("The user is not invited at this index")
+
+
+def make_user_permanent(event_key, user_index, user_key) -> None:
+    events = deta.Base(EVENT_BASE)
+    event = events.get(event_key)
+    
+    event[USERS][user_index][KEY] = user_key
+    event[USERS][user_index][STATUS] = UserStatus.PERMANENT.value
+    events.update({
+            USERS: event[USERS]
+        },event_key) 
+
+
+def make_user_uninvited(event_key, user_index) -> None:
+    events = deta.Base(EVENT_BASE)
+    event = events.get(event_key)
+    
+    event[USERS][user_index][KEY] = str(user_index)
+    events.update({
+            USERS: event[USERS]
+        },event_key)       
     
 
             
