@@ -2,7 +2,8 @@ from flask import Flask, request, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
 from backend.user_backend import *
 from backend.event_backend import *
-from constant import KEY, EVENT_KEY, OWNER, USER_KEY, IS_ACCEPTED, NAME, INDEX, OWNER_NAME
+from backend.bill_backend import *
+from constant import *
 
 app = Flask(__name__)
 
@@ -49,7 +50,7 @@ def get_user():
 
     try:
         data = request.get_json()
-        user_data = get_user_from_database(data)
+        user_data = fetch_user(data[KEY])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -67,12 +68,20 @@ def create_event():
 
     try:
         data = request.get_json()
-        create_event_in_database(data)
-        add_new_user_to_event(event_key=data[KEY], user_name=data[OWNER_NAME])
         
-        if is_event_active(event_key=data[KEY]):
-            add_event_to_user(user_key=data[OWNER], event_key=data[KEY], user_index=0)
-            make_user_permanent(event_key=data[KEY],user_key=data[OWNER], user_index=0)
+        
+        if data[STATUS] == EventStatus.PERMANENT.value:
+            user = fetch_user(user_key=data[OWNER])
+        
+        event = create_event_in_database(data)
+        add_new_user_to_event(event=event, user_name=data[OWNER_NAME])
+        
+        if is_event_permanent(event):
+            add_event_to_user(user=user, event_key=event[KEY], user_index=0)
+            make_user_permanent(event=event,user_key=user[KEY], user_index=0)
+            update_user(user)
+        
+        update_event(event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -90,7 +99,9 @@ def add_new_user():
     
     try:
         data = request.get_json()
-        add_new_user_to_event(event_key=data[EVENT_KEY], user_name=data[NAME])
+        event = fetch_event(event_key=data[EVENT_KEY])
+        add_new_user_to_event(event=event, user_name=data[NAME])
+        update_event(event)
         
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -108,10 +119,16 @@ def send_invite():
 
     try:
         data = request.get_json()
-        check_event_before_inviting(event_key=data[EVENT_KEY], user_index=data[INDEX])
-        check_user_before_inviting(user_key=data[USER_KEY], event_key=data[EVENT_KEY])
-        mark_user_invited(user_key=data[USER_KEY], event_key=data[EVENT_KEY], user_index=data[INDEX])
-        send_invite_to_user(user_key=data[USER_KEY], event_key=data[EVENT_KEY], user_index=data[INDEX])
+        event = fetch_event(data[EVENT_KEY])
+        user = fetch_user(data[USER_KEY])
+        
+        check_event_before_inviting(event=event, user_index=data[INDEX])
+        check_user_before_inviting(user=user, event_key=event[KEY])
+        mark_user_invited(user_key=user[KEY], event=event, user_index=data[INDEX])
+        send_invite_to_user(user=user, event_key=event[KEY], user_index=data[INDEX])
+        
+        update_user(user=user)
+        update_event(event=event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -129,16 +146,21 @@ def accept_invite():
 
     try:
         data = request.get_json()
-
-        event = check_user_before_adding(user_key=data[USER_KEY], invite_index=data[INDEX])
-        check_event_before_adding(event_key=event[KEY],user_key=data[USER_KEY],user_index=event[INDEX])
+        
+        user = fetch_user(user_key=data[USER_KEY])
+        invite = check_user_before_adding(user=user, invite_index=data[INDEX])
+        event = fetch_event(event_key=invite[KEY])
+        check_event_before_adding(event=event,user_key=user[KEY],user_index=invite[INDEX])
 
         if data[IS_ACCEPTED] == True:
-            add_event_to_user(user_key=data[USER_KEY], event_key=event[KEY], user_index=event[INDEX])
-            make_user_permanent(event_key=event[KEY],user_key=data[USER_KEY], user_index=event[INDEX])
+            add_event_to_user(user=user, event_key=event[KEY], user_index=invite[INDEX])
+            make_user_permanent(event=event,user_key=user[KEY], user_index=invite[INDEX])
 
-        make_user_uninvited(event_key=event[KEY], user_index=event[INDEX])
-        delete_invite(user_key=data[USER_KEY], invite_index=data[INDEX])
+        make_user_uninvited(event=event, user_index=invite[INDEX])
+        delete_invite(user=user, invite_index=data[INDEX])
+        
+        update_event(event=event)
+        update_user(user=user)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -146,7 +168,34 @@ def accept_invite():
     except KeyError as err:
         return jsonify(error=str(err)), 400
     
-    return jsonify(success="User Added to Event"), 200 if data[IS_ACCEPTED] == True else jsonify(success="Invitaion Rejected"), 200
+    if data[IS_ACCEPTED] == True:
+        return jsonify(success="User Added to Event"), 200
+    else:
+        return jsonify(success="Invitation Rejected"), 200
+
+
+
+@app.route("/create_bill", methods=['GET', 'POST'])
+def create_bill():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+    
+    try:
+        data = request.get_json()
+        event = fetch_event(event_key=data[EVENT_KEY])
+        bill = create_bill_in_database(data)
+        update_drawee_expenses(drawees=bill[DRAWEES],event=event,contribution=bill[AMOUNT]/len(bill[DRAWEES]),  bill_key=bill[KEY])
+        update_payee_expenses(payees=bill[PAYEES],event=event, bill_key=bill[KEY])
+        add_bill_to_event(event=event, bill_key=bill[KEY])
+        update_event(event=event)
+
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(success="Bill Created!"), 200
 
 
 if __name__ == '__main__':

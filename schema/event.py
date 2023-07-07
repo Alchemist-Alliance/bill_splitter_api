@@ -7,16 +7,15 @@ class UserStatus(Enum):
     PERMANENT = 2
 
 class EventStatus(Enum):
-    TEMPORARY = 0
-    ACTIVE = 1
-    INACTIVE = 2
+    REMOVED = 0
+    TEMPORARY = 1
+    PERMANENT = 2
 
 class Event:
-    def __init__(self, key, name, users, bills, owner, status) -> None:
+    def __init__(self, name, users, bills, owner, status) -> None:
         """Initialization Function for the Event Class
 
         Args:
-            key (String): The Unique Identification Key for an Event
             name (String): The name of the Event
             users (List[Dict]): The List of Users(Data) which are a part of Event
             bills (List[String]): The List of Bills(Key) which collectively create the Event
@@ -24,7 +23,6 @@ class Event:
             status (Boolean): The Status of Event whether it is temporary, active or inactive
 
         Raises:
-            TypeError: If the [Key] Assigned to [Event] is Null
             TypeError: If the [Name] of [Event] is different datatype than [String]
             TypeError: If The List of [Users] is different datatype than [List]
             TypeError: If all the list items of [Users] are not validated properly
@@ -33,12 +31,6 @@ class Event:
             TypeError: If the [Owner] of [Event] is different datatype than [String]
             TypeError: If the [status] is different datatype than [Integer] and within the range of 0 to 2
         """
-
-
-        if key == None:
-            raise TypeError("Key should not be Null")
-        else:
-            self.key = key
 
 
         if not isinstance(name, str):
@@ -78,7 +70,6 @@ class Event:
     
     def to_dict(self) -> dict:
         event_dict = {
-            KEY : self.key,
             NAME: self.name,
             USERS: self.users,
             BILLS: self.bills,
@@ -103,6 +94,10 @@ def validate_user(user) -> bool:
         TypeError: If The Status of [User] should be in the range of 0 to length of [UserStatus] Enum
         TypeError: If The Bills of [User] is different datatype than [List]
         TypeError: If each bill in Bills is different datatype than [String]
+        
+    Returns:
+        bool : True if the User Data of user stored in [Users] List in Event gets validated properly
+        
     """
     
     if not isinstance(user, dict):
@@ -116,7 +111,7 @@ def validate_user(user) -> bool:
     if not isinstance(user.get(STATUS), int):
         raise TypeError("User Status should be integer")
     if user.get(STATUS) < 0 or user.get(STATUS) > len(UserStatus):
-        raise TypeError("User Status should be in the range of 0 to 2")
+        raise TypeError(f"User Status should be in the range of 0 to {len(UserStatus) - 1}")
     if not isinstance(user.get(BILLS), list):
         raise TypeError("User Bills should be a list")
     if not all(isinstance(bill, str) for bill in user.get(BILLS)):

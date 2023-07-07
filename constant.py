@@ -44,3 +44,7 @@ INDEX = "index"
 TEMP = "temp"
 OWNER_NAME = "owner_name"
 USER_KEY = "user_key"
+
+
+#TODO 1: split the functionality of fetch data from database, validating it and making changes to minimize DB calls
+#TODO 2: properly comment the functions

@@ -1,29 +1,36 @@
 from schema.user import User
 from constant import USER_BASE, deta, KEY, NAME, FRIENDS, EVENTS, INVITES, INDEX
+users = deta.Base(USER_BASE)
 
 
 def create_user_in_database(data) -> None:
-    user = User(
+    user_obj = User(
         key=data[KEY],
         name=data[NAME],
         friends=data[FRIENDS],
         invites=data[INVITES],
         events=data[EVENTS]
     )
-    user_dict = user.to_dict()
+    user_dict = user_obj.to_dict()
     users = deta.Base(USER_BASE)
     users.put(user_dict)
     
     
-def get_user_from_database(data) -> dict:
-    users = deta.Base(USER_BASE)
-    return users.get(data[KEY])
+def fetch_user(user_key) -> dict:
+    """Returns the user for the provided user key from database 
 
+    Args:
+        user_key ([String]): Unique Key for the User
 
-def check_user_before_inviting(user_key, event_key) -> None:
+    Returns:
+        dict: User Details for the specified user_key
+    """
     users = deta.Base(USER_BASE)
     user = users.get(user_key)
-    
+    return user
+
+
+def check_user_before_inviting(user, event_key) -> None:
     if user is None:
         raise TypeError("No Such User Exists")
     
@@ -37,23 +44,16 @@ def check_user_before_inviting(user_key, event_key) -> None:
 
     
 
-def send_invite_to_user(user_key, event_key, user_index) -> None:
-    users = deta.Base(USER_BASE)
-    user = users.get(user_key)
-    
+def send_invite_to_user(user, event_key, user_index) -> None:
     event = {
         KEY : event_key,
         INDEX : user_index
     }
     
     user[INVITES].append(event)
-    users.update({INVITES : user[INVITES]}, user_key)
 
 
-def check_user_before_adding(user_key, invite_index) -> dict:
-    users = deta.Base(USER_BASE)
-    user = users.get(user_key)
-    
+def check_user_before_adding(user, invite_index) -> dict:
     if user is None:
         raise TypeError("No Such User Exists")
     
@@ -69,21 +69,17 @@ def check_user_before_adding(user_key, invite_index) -> dict:
     return user[INVITES][invite_index]
 
 
-def delete_invite(user_key, invite_index) -> None:
-    users = deta.Base(USER_BASE)
-    user = users.get(user_key)
+def delete_invite(user, invite_index) -> None:
     del user[INVITES][invite_index]
-    users.update({INVITES : user[INVITES]}, user_key)
 
 
-def add_event_to_user(user_key, event_key, user_index) -> None:
-    users = deta.Base(USER_BASE)
-    user = users.get(user_key)
-    
+def add_event_to_user(user, event_key, user_index) -> None:
     event = {
         KEY: event_key,
         INDEX: user_index
     }
-    
     user[EVENTS].append(event)
-    users.update({EVENTS : user[EVENTS]}, user_key) 
+
+    
+def update_user(user):
+    users.put(user,user[KEY])
