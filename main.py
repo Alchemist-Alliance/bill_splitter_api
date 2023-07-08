@@ -68,15 +68,14 @@ def create_event():
 
     try:
         data = request.get_json()
-        
-        
         if data[STATUS] == EventStatus.PERMANENT.value:
             user = fetch_user(user_key=data[OWNER])
+            check_user_before_creating_event(user)
         
         event = create_event_in_database(data)
         add_new_user_to_event(event=event, user_name=data[OWNER_NAME])
         
-        if is_event_permanent(event):
+        if data[STATUS] == EventStatus.PERMANENT.value:
             add_event_to_user(user=user, event_key=event[KEY], user_index=0)
             make_user_permanent(event=event,user_key=user[KEY], user_index=0)
             update_user(user)
@@ -90,6 +89,25 @@ def create_event():
         return jsonify(error=str(err)), 400
 
     return jsonify(success="Event Created!"), 200
+
+
+@app.route("/get_event", methods=['GET', 'POST'])
+def get_event():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+
+    try:
+        data = request.get_json()
+        user_data = fetch_event(data[KEY])
+
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(user_data=user_data), 200
+
 
 
 @app.route("/add_new_user", methods=['GET', 'POST'])
@@ -183,10 +201,9 @@ def create_bill():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
+        check_event_before_creating_bill(event=event, drawees=data[DRAWEES], payees=data[PAYEES])
         bill = create_bill_in_database(data)
-        update_drawee_expenses(drawees=bill[DRAWEES],event=event,contribution=bill[AMOUNT]/len(bill[DRAWEES]),  bill_key=bill[KEY])
-        update_payee_expenses(payees=bill[PAYEES],event=event, bill_key=bill[KEY])
-        add_bill_to_event(event=event, bill_key=bill[KEY])
+        add_bill_in_event(drawees=bill[DRAWEES],payees=bill[PAYEES],event=event,amount=bill[AMOUNT],  bill_key=bill[KEY])
         update_event(event=event)
 
     except TypeError as err:
@@ -196,6 +213,30 @@ def create_bill():
         return jsonify(error=str(err)), 400
 
     return jsonify(success="Bill Created!"), 200
+
+
+@app.route("/delete_bill", methods=['GET', 'POST'])
+def delete_bill():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+    
+    try:
+        data = request.get_json()
+        bill = fetch_bill(bill_key=data[KEY])
+        check_bill_before_deleting(bill=bill)
+        event = fetch_event(event_key=bill[EVENT_KEY])
+        check_event_before_removing_bill(event=event, bill_key=bill[KEY])
+        remove_bill_from_event(drawees=bill[DRAWEES],payees=bill[PAYEES],event=event,amount=bill[AMOUNT],  bill_key=bill[KEY])
+        update_event(event=event)
+        remove_bill(bill=bill)
+    
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(success="Bill Deleted!"), 200
 
 
 if __name__ == '__main__':

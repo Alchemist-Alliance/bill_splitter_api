@@ -30,6 +30,11 @@ def fetch_user(user_key) -> dict:
     return user
 
 
+def check_user_before_creating_event(user) -> None:
+    if user is None:
+        raise TypeError("No Such User Exists")
+
+
 def check_user_before_inviting(user, event_key) -> None:
     if user is None:
         raise TypeError("No Such User Exists")

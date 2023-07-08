@@ -1,5 +1,6 @@
-from constant import EVENT_KEY, NAME, AMOUNT, DRAWEES, PAYEES, NOTES, BILL_BASE,deta, USER_COUNT
+from constant import KEY, EVENT_KEY, NAME, AMOUNT, DRAWEES, PAYEES, NOTES, BILL_BASE,deta, USER_COUNT
 from schema.bill import Bill
+bills = deta.Base(BILL_BASE)
 
 def create_bill_in_database(data) -> dict:
     bill_obj = Bill(
@@ -12,7 +13,28 @@ def create_bill_in_database(data) -> dict:
             notes = data[NOTES]
         )
     bill_dict = bill_obj.to_dict()
-    events = deta.Base(BILL_BASE)
-    bill = events.put(bill_dict)
+    bill = bills.put(bill_dict)
     return bill
         
+        
+def fetch_bill(bill_key) -> dict:
+    """Returns the bill for the provided bill key from database 
+
+    Args:
+        bill_key ([String]): Unique Key for the Bill
+
+    Returns:
+        dict: Bill Details for the specified bill_key
+    """
+    bill = bills.get(bill_key)
+    return bill
+
+
+def check_bill_before_deleting(bill) -> None:
+    if bill is None:
+        raise TypeError("No Such Bill Exists")
+    
+
+
+def remove_bill(bill) -> None:
+    bills.delete(bill[KEY])

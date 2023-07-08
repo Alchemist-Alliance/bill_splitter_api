@@ -2,12 +2,12 @@ from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS
 from enum import Enum
 
 class UserStatus(Enum):
-    REMOVED = 0
+    INACTIVE = 0
     TEMPORARY = 1
     PERMANENT = 2
 
 class EventStatus(Enum):
-    REMOVED = 0
+    INACTIVE = 0
     TEMPORARY = 1
     PERMANENT = 2
 
@@ -110,7 +110,7 @@ def validate_user(user) -> bool:
         raise TypeError("User expenses should be float")
     if not isinstance(user.get(STATUS), int):
         raise TypeError("User Status should be integer")
-    if user.get(STATUS) < 0 or user.get(STATUS) > len(UserStatus):
+    if user.get(STATUS) < 0 or user.get(STATUS) >= len(UserStatus):
         raise TypeError(f"User Status should be in the range of 0 to {len(UserStatus) - 1}")
     if not isinstance(user.get(BILLS), list):
         raise TypeError("User Bills should be a list")
