@@ -88,7 +88,7 @@ def create_event():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Event Created!"), 200
+    return jsonify(success=f"Event Created with key = {event[KEY]}!"), 200
 
 
 @app.route("/get_event", methods=['GET', 'POST'])
