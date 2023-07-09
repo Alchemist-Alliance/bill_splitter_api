@@ -140,14 +140,14 @@ def add_bill_in_event(drawees, payees, event, amount, bill_key) -> None:
     contribution = amount / len(drawees)
     for drawee in drawees:
         event[USERS][drawee][EXPENSES] -= contribution
-        if event[USERS][drawee][BILLS] is None:
+        if event[USERS][drawee][BILLS] is None or len(event[USERS][drawee][BILLS]):
             event[USERS][drawee][BILLS] = [bill_key]
         else:
             event[USERS][drawee][BILLS].append(bill_key)
             
     for payee in payees:
         event[USERS][int(payee)][EXPENSES] += payees[payee]
-        if event[USERS][int(payee)][BILLS] is None:
+        if event[USERS][int(payee)][BILLS] is None or len(event[USERS][int(payee)][BILLS]) == 0:
             event[USERS][int(payee)][BILLS] = [bill_key]
         elif event[USERS][int(payee)][BILLS][-1] != bill_key:
             event[USERS][int(payee)][BILLS].append(bill_key)
