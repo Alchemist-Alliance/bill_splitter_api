@@ -81,7 +81,7 @@ def create_event():
             check_user_before_creating_event(user)
         
         event = create_event_in_database(data)
-        add_new_user_to_event(event=event, user_name=data[OWNER_NAME])
+        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         
         if data[STATUS] == EventStatus.PERMANENT.value:
             add_event_to_user(user=user, event_key=event[KEY], user_index=0)
@@ -126,7 +126,7 @@ def add_new_user():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
-        add_new_user_to_event(event=event, user_name=data[NAME])
+        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         update_event(event)
         
     except TypeError as err:

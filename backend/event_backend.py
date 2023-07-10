@@ -45,19 +45,26 @@ def fetch_event(event_key) -> dict:
 #     return event[STATUS] == EventStatus.PERMANENT.value
 
 
-def add_new_user_to_event(event, user_name) -> None:
+def add_new_users_to_event(event, user_names) -> None:
     if event is None or event[STATUS] == EventStatus.INACTIVE.value:
         raise TypeError("Event is Inactive or does not exist")
     
-    user = {
-        NAME : user_name,
-        KEY : str(len(event[USERS])),
-        EXPENSES : 0.0,
-        BILLS : [],
-        STATUS : UserStatus.TEMPORARY.value
-    }
+    if not isinstance(user_names, list):
+        raise TypeError("user_names must be a list of User Names")
     
-    event[USERS].append(user)
+    for user_name in user_names:
+        
+        if not isinstance(user_name, str):
+            raise TypeError("each name in user_names should be a string")
+        
+        user = {
+            NAME : user_name,
+            KEY : str(len(event[USERS])),
+            EXPENSES : 0.0,
+            BILLS : [],
+            STATUS : UserStatus.TEMPORARY.value
+        }
+        event[USERS].append(user)
 
 
 
