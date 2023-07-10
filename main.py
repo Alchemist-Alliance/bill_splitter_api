@@ -7,7 +7,7 @@ from constant import *
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app=app)
+# CORS(app=app)
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -76,19 +76,21 @@ def create_event():
 
     try:
         data = request.get_json()
+        
+        event = validate_new_event(data)
+        check_event_before_adding_users(event=event, user_names=data[USER_NAMES])
+        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
+        update_owner_for_event(event=event, owner=data[USER_NAMES][0])
+        
         if data[STATUS] == EventStatus.PERMANENT.value:
             user = fetch_user(user_key=data[OWNER])
             check_user_before_creating_event(user)
-        
-        event = create_event_in_database(data)
-        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
-        
-        if data[STATUS] == EventStatus.PERMANENT.value:
+            update_owner_for_event(event=event, owner=data[OWNER])
             add_event_to_user(user=user, event_key=event[KEY], user_index=0)
             make_user_permanent(event=event,user_key=user[KEY], user_index=0)
             update_user(user)
         
-        update_event(event)
+        event = create_new_event(event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -126,6 +128,7 @@ def add_new_user():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
+        check_event_before_adding_users(event=event, user_names=data[USER_NAMES])
         add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         update_event(event)
         

@@ -1,8 +1,8 @@
-from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT
 from schema.event import Event, UserStatus, EventStatus
 events = deta.Base(EVENT_BASE)
 
-def create_event_in_database(data) -> dict:
+def validate_new_event(data) -> dict:
     """Creates the event for the provided details in the database
 
     Args:
@@ -11,17 +11,16 @@ def create_event_in_database(data) -> dict:
     Returns:
         dict: Event Details that were stored in the database
     """
+    
     event_obj = Event(
             name=data[NAME],
-            users=data[USERS],
-            bills=data[BILLS],
-            owner=data[OWNER],
+            users=[],
+            bills=[],
+            owner=DEFAULT,
             status=data[STATUS]
         )
     event_dict = event_obj.to_dict()
-    events = deta.Base(EVENT_BASE)
-    event = events.put(event_dict)
-    return event
+    return event_dict
 
 
 
@@ -39,21 +38,25 @@ def fetch_event(event_key) -> dict:
     return event
 
 
-# def is_event_permanent(event) -> bool:
-#     if event is None:
-#         return False
-#     return event[STATUS] == EventStatus.PERMANENT.value
+def update_owner_for_event(event, owner) -> None:
+    
+    if not isinstance(owner, str):
+        raise TypeError("Owner should be a string")
+    
+    event[OWNER] = owner
 
 
-def add_new_users_to_event(event, user_names) -> None:
+def check_event_before_adding_users(event, user_names) -> None:
     if event is None or event[STATUS] == EventStatus.INACTIVE.value:
         raise TypeError("Event is Inactive or does not exist")
     
-    if not isinstance(user_names, list):
-        raise TypeError("user_names must be a list of User Names")
+    if not isinstance(user_names, list) or len(user_names) == 0:
+        raise TypeError("user_names must be a list of User Names and not empty")
+
+
+def add_new_users_to_event(event, user_names) -> None:
     
-    for user_name in user_names:
-        
+    for user_name in user_names:    
         if not isinstance(user_name, str):
             raise TypeError("each name in user_names should be a string")
         
@@ -195,5 +198,8 @@ def remove_bill_from_event(drawees, payees, event, amount, bill_key) -> None:
     
 
 
-def update_event(event):
-    events.put(event, event[KEY])
+def create_new_event(event) -> dict:
+    return events.put(event)
+
+def update_event(event) -> dict:
+    return events.put(event, event[KEY])
