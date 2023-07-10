@@ -4,8 +4,10 @@ from backend.user_backend import *
 from backend.event_backend import *
 from backend.bill_backend import *
 from constant import *
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app=app)
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -32,7 +34,9 @@ def create_user():
 
     try:
         data = request.get_json()
-        create_user_in_database(data)
+        user = create_user_in_database(data)
+        redisClient.json().set(f"USER-{user[KEY]}",'$',user)
+        redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -50,7 +54,11 @@ def get_user():
 
     try:
         data = request.get_json()
-        user_data = fetch_user(data[KEY])
+        # print(data[KEY])
+        user = redisClient.json().get(name=f"USER-{data[KEY]}")
+        # print(user)
+        if user is None:
+            user = fetch_user(data[KEY])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -58,7 +66,7 @@ def get_user():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(user_data=user_data), 200
+    return jsonify(user_data=user), 200
 
 
 @app.route("/create_event", methods=['GET', 'POST'])

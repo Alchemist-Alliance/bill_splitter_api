@@ -1,5 +1,6 @@
+deta==1.1.0
 Flask==2.2.3
-gunicorn
-python-dotenv
-deta
-flask-swagger-ui
+Flask_Cors==4.0.0
+flask_swagger_ui==4.11.1
+python-dotenv==1.0.0
+redis==4.6.0
