@@ -1,6 +1,7 @@
 from deta import Deta
 from os import getenv
 from dotenv import load_dotenv
+from redis import Redis
 
 
 try:
@@ -11,6 +12,16 @@ except:
 #DETA Configs
 DETA_PROJECT_KEY = getenv("DETA_PROJECT_KEY")
 deta = Deta(DETA_PROJECT_KEY)
+
+REDIS_PASSWORD = getenv("REDIS_PASSWORD")
+REDIS_HOST = getenv("REDIS_HOST")
+REDIS_PORT = getenv("REDIS_PORT")
+redisClient = Redis(
+    host=REDIS_HOST,
+    port=REDIS_PORT,
+    password=REDIS_PASSWORD,
+    decode_responses=True
+)
 
 #DETA BASE NAMES
 EVENT_BASE = "event_base"
@@ -44,7 +55,13 @@ INDEX = "index"
 TEMP = "temp"
 OWNER_NAME = "owner_name"
 USER_KEY = "user_key"
+USER_NAMES = "user_names"
+DEFAULT="default"
+
+
+DEFAULT_TIME = 3600
 
 
 #TODO 1: split the functionality of fetch data from database, validating it and making changes to minimize DB calls
 #TODO 2: properly comment the functions
+

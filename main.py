@@ -4,7 +4,11 @@ from backend.user_backend import *
 from backend.event_backend import *
 from backend.bill_backend import *
 from constant import *
+from flask_cors import CORS
+
 app = Flask(__name__)
+CORS(app, resources={
+     r"/*": {"origins": ["http://localhost:3000", "https://bill-splitter-frontend-alpha.vercel.app"]}})
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -21,7 +25,7 @@ app.register_blueprint(SWAGGER_BLUEPRINT, url_prefix=SWAGGER_URL)
 
 @app.route("/")
 def home():
-    return "Bill Splitter API!"
+    return jsonify(error="Go to bill splitter app"), 400
 
 
 @app.route("/create_user", methods=['GET', 'POST'])
@@ -31,7 +35,9 @@ def create_user():
 
     try:
         data = request.get_json()
-        create_user_in_database(data)
+        user = create_user_in_database(data)
+        redisClient.json().set(f"USER-{user[KEY]}", '$', user)
+        redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -49,7 +55,11 @@ def get_user():
 
     try:
         data = request.get_json()
-        user_data = fetch_user(data[KEY])
+        # print(data[KEY])
+        user = redisClient.json().get(name=f"USER-{data[KEY]}")
+        # print(user)
+        if user is None:
+            user = fetch_user(data[KEY])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -57,7 +67,7 @@ def get_user():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(user_data=user_data), 200
+    return jsonify(user_data=user), 200
 
 
 @app.route("/create_event", methods=['GET', 'POST'])
@@ -67,19 +77,22 @@ def create_event():
 
     try:
         data = request.get_json()
+
+        event = validate_new_event(data)
+        check_event_before_adding_users(
+            event=event, user_names=data[USER_NAMES])
+        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
+        update_owner_for_event(event=event, owner=data[USER_NAMES][0])
+
         if data[STATUS] == EventStatus.PERMANENT.value:
             user = fetch_user(user_key=data[OWNER])
             check_user_before_creating_event(user)
-
-        event = create_event_in_database(data)
-        add_new_user_to_event(event=event, user_name=data[OWNER_NAME])
-
-        if data[STATUS] == EventStatus.PERMANENT.value:
+            update_owner_for_event(event=event, owner=data[OWNER])
             add_event_to_user(user=user, event_key=event[KEY], user_index=0)
             make_user_permanent(event=event, user_key=user[KEY], user_index=0)
             update_user(user)
 
-        update_event(event)
+        event = create_new_event(event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -116,7 +129,9 @@ def add_new_user():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
-        add_new_user_to_event(event=event, user_name=data[NAME])
+        check_event_before_adding_users(
+            event=event, user_names=data[USER_NAMES])
+        add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         update_event(event)
 
     except TypeError as err:

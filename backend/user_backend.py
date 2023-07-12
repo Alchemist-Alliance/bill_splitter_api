@@ -3,7 +3,7 @@ from constant import USER_BASE, deta, KEY, NAME, FRIENDS, EVENTS, INVITES, INDEX
 users = deta.Base(USER_BASE)
 
 
-def create_user_in_database(data) -> None:
+def create_user_in_database(data) -> dict:
     user_obj = User(
         key=data[KEY],
         name=data[NAME],
@@ -13,7 +13,7 @@ def create_user_in_database(data) -> None:
     )
     user_dict = user_obj.to_dict()
     users = deta.Base(USER_BASE)
-    users.put(user_dict)
+    return users.put(user_dict)
     
     
 def fetch_user(user_key) -> dict:

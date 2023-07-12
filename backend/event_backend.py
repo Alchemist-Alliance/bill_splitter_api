@@ -1,8 +1,8 @@
-from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT
 from schema.event import Event, UserStatus, EventStatus
 events = deta.Base(EVENT_BASE)
 
-def create_event_in_database(data) -> dict:
+def validate_new_event(data) -> dict:
     """Creates the event for the provided details in the database
 
     Args:
@@ -11,17 +11,16 @@ def create_event_in_database(data) -> dict:
     Returns:
         dict: Event Details that were stored in the database
     """
+    
     event_obj = Event(
             name=data[NAME],
-            users=data[USERS],
-            bills=data[BILLS],
-            owner=data[OWNER],
+            users=[],
+            bills=[],
+            owner=DEFAULT,
             status=data[STATUS]
         )
     event_dict = event_obj.to_dict()
-    events = deta.Base(EVENT_BASE)
-    event = events.put(event_dict)
-    return event
+    return event_dict
 
 
 
@@ -39,25 +38,36 @@ def fetch_event(event_key) -> dict:
     return event
 
 
-# def is_event_permanent(event) -> bool:
-#     if event is None:
-#         return False
-#     return event[STATUS] == EventStatus.PERMANENT.value
+def update_owner_for_event(event, owner) -> None:
+    
+    if not isinstance(owner, str):
+        raise TypeError("Owner should be a string")
+    
+    event[OWNER] = owner
 
 
-def add_new_user_to_event(event, user_name) -> None:
+def check_event_before_adding_users(event, user_names) -> None:
     if event is None or event[STATUS] == EventStatus.INACTIVE.value:
         raise TypeError("Event is Inactive or does not exist")
     
-    user = {
-        NAME : user_name,
-        KEY : str(len(event[USERS])),
-        EXPENSES : 0.0,
-        BILLS : [],
-        STATUS : UserStatus.TEMPORARY.value
-    }
+    if not isinstance(user_names, list) or len(user_names) == 0:
+        raise TypeError("user_names must be a list of User Names and not empty")
+
+
+def add_new_users_to_event(event, user_names) -> None:
     
-    event[USERS].append(user)
+    for user_name in user_names:    
+        if not isinstance(user_name, str):
+            raise TypeError("each name in user_names should be a string")
+        
+        user = {
+            NAME : user_name,
+            KEY : str(len(event[USERS])),
+            EXPENSES : 0.0,
+            BILLS : [],
+            STATUS : UserStatus.TEMPORARY.value
+        }
+        event[USERS].append(user)
 
 
 
@@ -140,14 +150,14 @@ def add_bill_in_event(drawees, payees, event, amount, bill_key) -> None:
     contribution = amount / len(drawees)
     for drawee in drawees:
         event[USERS][drawee][EXPENSES] -= contribution
-        if event[USERS][drawee][BILLS] is None:
+        if event[USERS][drawee][BILLS] is None or len(event[USERS][drawee][BILLS]):
             event[USERS][drawee][BILLS] = [bill_key]
         else:
             event[USERS][drawee][BILLS].append(bill_key)
             
     for payee in payees:
         event[USERS][int(payee)][EXPENSES] += payees[payee]
-        if event[USERS][int(payee)][BILLS] is None:
+        if event[USERS][int(payee)][BILLS] is None or len(event[USERS][int(payee)][BILLS]) == 0:
             event[USERS][int(payee)][BILLS] = [bill_key]
         elif event[USERS][int(payee)][BILLS][-1] != bill_key:
             event[USERS][int(payee)][BILLS].append(bill_key)
@@ -188,5 +198,8 @@ def remove_bill_from_event(drawees, payees, event, amount, bill_key) -> None:
     
 
 
-def update_event(event):
-    events.put(event, event[KEY])
+def create_new_event(event) -> dict:
+    return events.put(event)
+
+def update_event(event) -> dict:
+    return events.put(event, event[KEY])
