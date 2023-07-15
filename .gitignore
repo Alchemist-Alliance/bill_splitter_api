@@ -1,1 +1,5 @@
 venv/
+.env
+__pycache__/
+scheme/__pycache__/
+backend/__pycache__/

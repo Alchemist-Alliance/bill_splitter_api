@@ -1,0 +1,1 @@
+web: gunicorn -b :$PORT --workers=2 main:app
