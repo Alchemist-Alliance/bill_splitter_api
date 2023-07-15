@@ -1,7 +1,7 @@
 from constant import REDIS_HOST, REDIS_PASSWORD, REDIS_PORT, KEY
 from redis import Redis
 
-DEFAULT_TIME = 900
+DEFAULT_TIME = 900 # 15 mins
 
 redisClient = Redis(
     host=REDIS_HOST,
@@ -20,4 +20,4 @@ def fetch_from_redis(Entity, key) -> dict:
     return redisClient.json().get(name=f"{Entity}-{key}")
 
 def remove_from_redis(Entity, key) -> dict:
-    return redisClient.json().delete(name=f"{Entity}-{key}")
+    return redisClient.json().delete(key=f"{Entity}-{key}")

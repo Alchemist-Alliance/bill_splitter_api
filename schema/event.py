@@ -115,16 +115,12 @@ def validate_user(user) -> bool:
         raise TypeError("User Status should be integer")
     if user.get(STATUS) < 0 or user.get(STATUS) >= len(UserStatus):
         raise TypeError(f"User Status should be in the range of 0 to {len(UserStatus) - 1}")
-    if len(user.get(BILLS)) != len(user.get(CONTRIBUTIONS)):
-        raise TypeError("The length of Bills and Contributions should be the same")
-    if not isinstance(user.get(BILLS), list):
-        raise TypeError("User Bills should be a list")
-    if not all(isinstance(bill, str) for bill in user.get(BILLS)):
-        raise TypeError("Each User Bill in User Bills should be string")
-    if not isinstance(user.get(CONTRIBUTIONS), list):
-        raise TypeError("Contributions should be a list")
-    if not all(isinstance(contribution, float) for contribution in user.get(CONTRIBUTIONS)):
-        raise TypeError("Each Contribution in Contributions should be string")
+    if not isinstance(user.get(BILLS), dict):
+        raise TypeError("User Bills should be a Dictionary")
+    if not all(isinstance(bill_keys, str) for bill_keys in user.get(BILLS).keys()):
+        raise TypeError("All keys in bills dict must be string")
+    if not all(isinstance(bill_values, float) for bill_values in user.get(BILLS).values()):
+        raise TypeError("All values in bills dict must be float")
     return True
 
 

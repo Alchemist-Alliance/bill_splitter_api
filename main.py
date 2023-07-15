@@ -220,7 +220,7 @@ def create_bill():
         event = fetch_event(event_key=data[EVENT_KEY])
         bill = validate_new_bill(data=data,user_count=len(event[USERS]))
         check_event_before_creating_bill(event=event, drawees=data[DRAWEES], payees=data[PAYEES])
-        bill = create_new_bill(bill)
+        bill = create_new_bill(bill, event)
         add_bill_in_event(event=event, bill=bill)
         update_event(event=event)
 
