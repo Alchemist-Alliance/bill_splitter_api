@@ -1,4 +1,4 @@
-from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS
+from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS, CONTRIBUTIONS, SHARED_AMOUNT
 from enum import Enum
 
 class UserStatus(Enum):
@@ -27,7 +27,7 @@ class Event:
             TypeError: If The List of [Users] is different datatype than [List]
             TypeError: If all the list items of [Users] are not validated properly
             TypeError: If The List of [Bills] is different datatype than [List]
-            TypeError: If all the list items of [Bills] are not of [String] datatype
+            TypeError: If all the list items of [Bills] are not validated properly
             TypeError: If the [Owner] of [Event] is different datatype than [String]
             TypeError: If the [status] is different datatype than [Integer] and within the range of 0 to 2
         """
@@ -49,7 +49,7 @@ class Event:
 
         if not isinstance(bills, list):
             raise TypeError("Bills should be a list")
-        elif not all(isinstance(bill, str) for bill in bills):
+        elif not all(validate_bill(bill) == True for bill in bills):
             raise TypeError("Each billKey in bills list should be a string")
         else:
             self.bills = bills
@@ -92,11 +92,14 @@ def validate_user(user) -> bool:
         TypeError: If The Expense of [User] is different datatype than [Float]
         TypeError: If The Status of [User] is different datatype than [Integer]
         TypeError: If The Status of [User] should be in the range of 0 to length of [UserStatus] Enum
+        TypeError: If The Length of Bills of [User] is not equal to the Length of Contributions of [User]
         TypeError: If The Bills of [User] is different datatype than [List]
         TypeError: If each bill in Bills is different datatype than [String]
+        TypeError: If The Contributions of [User] is different datatype than [List]
+        TypeError: If each Contribution in Contributions is different datatype than [Float]
         
     Returns:
-        bool : True if the User Data of user stored in [Users] List in Event gets validated properly
+        bool : True if the User Data of User stored in [Users] List in Event gets validated properly
         
     """
     
@@ -112,8 +115,41 @@ def validate_user(user) -> bool:
         raise TypeError("User Status should be integer")
     if user.get(STATUS) < 0 or user.get(STATUS) >= len(UserStatus):
         raise TypeError(f"User Status should be in the range of 0 to {len(UserStatus) - 1}")
+    if len(user.get(BILLS)) != len(user.get(CONTRIBUTIONS)):
+        raise TypeError("The length of Bills and Contributions should be the same")
     if not isinstance(user.get(BILLS), list):
         raise TypeError("User Bills should be a list")
     if not all(isinstance(bill, str) for bill in user.get(BILLS)):
         raise TypeError("Each User Bill in User Bills should be string")
+    if not isinstance(user.get(CONTRIBUTIONS), list):
+        raise TypeError("Contributions should be a list")
+    if not all(isinstance(contribution, float) for contribution in user.get(CONTRIBUTIONS)):
+        raise TypeError("Each Contribution in Contributions should be string")
+    return True
+
+
+def validate_bill(bill) -> bool:
+    """Validates the data for each bill stored in [Bills] List in Event
+
+    Args:
+        bill (Dictionary): The Bill Data of bill stored in [Bills] List in Event
+
+    Raises:
+        TypeError: If the [Bill] is different datatype than dict
+        TypeError: If The Key of [Bill] is different datatype than [String]
+        TypeError: If The Name of [Bill] is different datatype than [String]
+        TypeError: If The Shared_Amount of [Bill] is different datatype than [Float]
+        
+    Returns:
+        bool : True if the Bill Data of Bill stored in [Bills] List in Event gets validated properly
+        
+    """
+    if not isinstance(bill, dict):
+        raise TypeError("Bill details must shared in a dict")
+    if not isinstance(bill.get(KEY), str):
+        raise TypeError("Bill key should be string")
+    if not isinstance(bill.get(NAME), str):
+        raise TypeError("Bill name should be string")
+    if not isinstance(bill.get(SHARED_AMOUNT), float):
+        raise TypeError("Shared Amount should be float")
     return True

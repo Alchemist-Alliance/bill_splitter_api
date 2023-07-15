@@ -86,11 +86,13 @@ def create_event():
             user = fetch_user(user_key=data[OWNER])
             check_user_before_creating_event(user)
             update_owner_for_event(event=event, owner=data[OWNER])
-            add_event_to_user(user=user, event_key=event[KEY], user_index=0)
             make_user_permanent(event=event,user_key=user[KEY], user_index=0)
-            update_user(user)
         
         event = create_new_event(event)
+        
+        if data[STATUS] == EventStatus.PERMANENT.value:
+            add_event_to_user(user=user, event_key=event[KEY], user_index=0)
+            update_user(user)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -98,7 +100,7 @@ def create_event():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Event Created!" ,key=event[KEY]), 200
+    return jsonify(success="Event Created!" ,event=event), 200
 
 
 @app.route("/get_event", methods=['GET', 'POST'])
@@ -108,7 +110,7 @@ def get_event():
 
     try:
         data = request.get_json()
-        user_data = fetch_event(data[KEY])
+        event = fetch_event(data[KEY])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -116,7 +118,7 @@ def get_event():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(user_data=user_data), 200
+    return jsonify(event=event), 200
 
 
 
@@ -138,7 +140,7 @@ def add_new_user():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="User Added!"), 200
+    return jsonify(success="User Added!",event=event), 200
 
 
 @app.route("/send_invite", methods=['GET', 'POST'])
@@ -169,7 +171,7 @@ def send_invite():
 
 
 @app.route("/resolve_invite", methods=['GET', 'POST'])
-def accept_invite():
+def resolve_invite():
     if (not request.data):
         return jsonify(error="Send Json Data"), 400
 
@@ -213,8 +215,8 @@ def create_bill():
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
         check_event_before_creating_bill(event=event, drawees=data[DRAWEES], payees=data[PAYEES])
-        bill = create_bill_in_database(data)
-        add_bill_in_event(drawees=bill[DRAWEES],payees=bill[PAYEES],event=event,amount=bill[AMOUNT],  bill_key=bill[KEY])
+        bill = create_bill_in_database(data=data,user_count=len(event[USERS]))
+        add_bill_in_event(event=event, bill=bill)
         update_event(event=event)
 
     except TypeError as err:
@@ -223,7 +225,27 @@ def create_bill():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Created!"), 200
+    return jsonify(success="Bill Created!", bill=bill), 200
+
+
+
+@app.route("/get_bill", methods=['GET', 'POST'])
+def get_event():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+
+    try:
+        data = request.get_json()
+        bill = fetch_bill(data[KEY])
+
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(bill=bill), 200
+
 
 
 @app.route("/delete_bill", methods=['GET', 'POST'])
@@ -236,8 +258,8 @@ def delete_bill():
         bill = fetch_bill(bill_key=data[KEY])
         check_bill_before_deleting(bill=bill)
         event = fetch_event(event_key=bill[EVENT_KEY])
-        check_event_before_removing_bill(event=event, bill_key=bill[KEY])
-        remove_bill_from_event(drawees=bill[DRAWEES],payees=bill[PAYEES],event=event,amount=bill[AMOUNT],  bill_key=bill[KEY])
+        bill_idx = check_event_before_removing_bill(event=event, bill_key=bill[KEY])
+        remove_bill_from_event(event=event, bill=bill,  bill_idx=bill_idx)
         update_event(event=event)
         remove_bill(bill=bill)
     

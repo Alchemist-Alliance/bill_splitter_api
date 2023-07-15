@@ -1,4 +1,4 @@
-from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT, CONTRIBUTIONS, SHARED_AMOUNT, AMOUNT, DRAWEES, PAYEES
 from schema.event import Event, UserStatus, EventStatus
 events = deta.Base(EVENT_BASE)
 
@@ -60,14 +60,15 @@ def add_new_users_to_event(event, user_names) -> None:
         if not isinstance(user_name, str):
             raise TypeError("each name in user_names should be a string")
         
-        user = {
+        event_user = {
             NAME : user_name,
             KEY : str(len(event[USERS])),
             EXPENSES : 0.0,
             BILLS : [],
+            CONTRIBUTIONS : [],
             STATUS : UserStatus.TEMPORARY.value
         }
-        event[USERS].append(user)
+        event[USERS].append(event_user)
 
 
 
@@ -134,67 +135,81 @@ def check_event_before_creating_bill(event, drawees, payees) -> None:
             raise TypeError(f"{event[USERS][int(payee)][NAME]} is Inactive and can't be added to a bill")
 
 
-# def validate_drawees(drawees, event) -> None:
-#     for drawee in drawees:
-#         if drawee < 0 or drawee >= len(event[USERS]):
-#             raise TypeError(f"Drawee Index should be in the range of 0 to {len(event[USERS]) - 1}")
 
-
-# def validate_payees(payees, event) -> None:
-#     for payee in payees:
-#         if int(payee) < 0 or int(payee) >= len(event[USERS]):
-#             raise TypeError(f"Payee Index should be in the range of 0 to {len(event[USERS]) - 1}")
-
-
-def add_bill_in_event(drawees, payees, event, amount, bill_key) -> None:
-    contribution = amount / len(drawees)
-    for drawee in drawees:
-        event[USERS][drawee][EXPENSES] -= contribution
-        if event[USERS][drawee][BILLS] is None or len(event[USERS][drawee][BILLS]):
-            event[USERS][drawee][BILLS] = [bill_key]
-        else:
-            event[USERS][drawee][BILLS].append(bill_key)
-            
-    for payee in payees:
-        event[USERS][int(payee)][EXPENSES] += payees[payee]
+def add_bill_in_event(event, bill) -> None:
+    shared_amount = bill[AMOUNT] / len(bill[DRAWEES])
+    bill_idx = len(event[BILLS])
+    
+    event_bill = {
+        KEY : bill[KEY],
+        NAME : bill[NAME],
+        SHARED_AMOUNT : shared_amount
+    }
+    
+    event[BILLS].append(event_bill)
+    
+    for payee in bill[PAYEES]:
+        event[USERS][int(payee)][EXPENSES] += bill[PAYEES][payee]
+        
         if event[USERS][int(payee)][BILLS] is None or len(event[USERS][int(payee)][BILLS]) == 0:
-            event[USERS][int(payee)][BILLS] = [bill_key]
-        elif event[USERS][int(payee)][BILLS][-1] != bill_key:
-            event[USERS][int(payee)][BILLS].append(bill_key)
+            event[USERS][int(payee)][BILLS] = [bill_idx]
+            event[USERS][int(payee)][CONTRIBUTIONS] = [bill[PAYEES][payee]]
+        
+        else:
+            event[USERS][int(payee)][BILLS].append(bill_idx)
+            event[USERS][int(payee)][CONTRIBUTIONS].append(bill[PAYEES][payee])
+    
+    
+    for drawee in bill[DRAWEES]:
+        event[USERS][drawee][EXPENSES] -= shared_amount
+        
+        if event[USERS][drawee][BILLS] is None or len(event[USERS][drawee][BILLS]) == 0:
+            event[USERS][drawee][BILLS] = [bill_idx]
             
-    event[BILLS].append(bill_key)
+        elif event[USERS][int(payee)][BILLS][-1] != bill_idx:
+            event[USERS][drawee][BILLS].append(bill_idx)
+            
+
+    
 
 
 
-def check_event_before_removing_bill(event, bill_key) -> None:
+def check_event_before_removing_bill(event, bill_key) -> int:
     if event is None:
         raise TypeError("No Such Event Exists")
     
     if event[STATUS] == EventStatus.INACTIVE.value:
         raise TypeError("The Event is Inactive")
     
-    if event[BILLS].count(bill_key) == 0:
-        raise TypeError("No such Bill exists in the Event")
+    for bill_idx, event_bill in enumerate(event[BILLS]):
+        if event_bill[KEY] == bill_key:
+            return bill_idx
+        
+    raise TypeError("No Such Bill Exists in the Event")
 
 
 
-def remove_bill_from_event(drawees, payees, event, amount, bill_key) -> None:
-    contribution = amount / len(drawees)
-    for drawee in drawees:
-        event[USERS][drawee][EXPENSES] += contribution
-        if event[USERS][drawee][BILLS] is None:
-            continue
-        else:
-            event[USERS][drawee][BILLS].remove(bill_key)
-            
-    for payee in payees:
-        event[USERS][int(payee)][EXPENSES] -= payees[payee]
-        if event[USERS][int(payee)][BILLS] is None:
-            continue
-        elif event[USERS][int(payee)][BILLS].count(bill_key) != 0:
-            event[USERS][int(payee)][BILLS].remove(bill_key)
-            
-    event[BILLS].remove(bill_key)
+def remove_bill_from_event(event, bill, bill_idx) -> None:
+    shared_amount = bill[AMOUNT] / len(bill[DRAWEES])
+    
+    del event[BILLS][bill_idx]
+    
+    for payee in bill[PAYEES]:
+        event[USERS][int(payee)][EXPENSES] -= bill[PAYEES][payee]
+        
+        for user_bill, idx in enumerate(event[USERS][int(payee)][BILLS]):
+            if user_bill == bill_idx:
+                del event[USERS][int(payee)][BILLS][idx]
+                del event[USERS][int(payee)][CONTRIBUTIONS][idx]
+                break
+
+    for drawee in bill[DRAWEES]:
+        event[USERS][drawee][EXPENSES] += shared_amount
+
+        try:
+            event[USERS][drawee].remove(bill_idx)
+        except ValueError:
+            pass
     
 
 

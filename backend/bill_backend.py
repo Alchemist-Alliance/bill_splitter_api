@@ -2,14 +2,14 @@ from constant import KEY, EVENT_KEY, NAME, AMOUNT, DRAWEES, PAYEES, NOTES, BILL_
 from schema.bill import Bill
 bills = deta.Base(BILL_BASE)
 
-def create_bill_in_database(data) -> dict:
+def create_bill_in_database(data,user_count) -> dict:
     bill_obj = Bill(
             event_key = data[EVENT_KEY],
             name = data[NAME],
             amount = data[AMOUNT],
             drawees = data[DRAWEES],
             payees = data[PAYEES],
-            user_count=data[USER_COUNT],
+            user_count=user_count,
             notes = data[NOTES]
         )
     bill_dict = bill_obj.to_dict()
