@@ -7,7 +7,8 @@ from constant import *
 from flask_cors import CORS
 
 app = Flask(__name__)
-# CORS(app=app)
+CORS(app, resources={
+     r"/*": {"origins": ["http://localhost:3000", "https://bill-splitter-frontend-alpha.vercel.app"]}})
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -24,7 +25,7 @@ app.register_blueprint(SWAGGER_BLUEPRINT, url_prefix=SWAGGER_URL)
 
 @app.route("/")
 def home():
-    return "Bill Splitter API!"
+    return jsonify(error="Go to bill splitter app"), 400
 
 
 @app.route("/create_user", methods=['GET', 'POST'])
@@ -35,7 +36,7 @@ def create_user():
     try:
         data = request.get_json()
         user = create_user_in_database(data)
-        redisClient.json().set(f"USER-{user[KEY]}",'$',user)
+        redisClient.json().set(f"USER-{user[KEY]}", '$', user)
         redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
 
     except TypeError as err:
@@ -76,12 +77,13 @@ def create_event():
 
     try:
         data = request.get_json()
-        
+
         event = validate_new_event(data)
-        check_event_before_adding_users(event=event, user_names=data[USER_NAMES])
+        check_event_before_adding_users(
+            event=event, user_names=data[USER_NAMES])
         add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         update_owner_for_event(event=event, owner=data[USER_NAMES][0])
-        
+
         if data[STATUS] == EventStatus.PERMANENT.value:
             user = fetch_user(user_key=data[OWNER])
             check_user_before_creating_event(user)
@@ -121,19 +123,19 @@ def get_event():
     return jsonify(event=event), 200
 
 
-
 @app.route("/add_new_user", methods=['GET', 'POST'])
 def add_new_user():
     if (not request.data):
         return jsonify(error="Send Json Data"), 400
-    
+
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
-        check_event_before_adding_users(event=event, user_names=data[USER_NAMES])
+        check_event_before_adding_users(
+            event=event, user_names=data[USER_NAMES])
         add_new_users_to_event(event=event, user_names=data[USER_NAMES])
         update_event(event)
-        
+
     except TypeError as err:
         return jsonify(error=str(err)), 400
 
@@ -152,12 +154,14 @@ def send_invite():
         data = request.get_json()
         event = fetch_event(data[EVENT_KEY])
         user = fetch_user(data[USER_KEY])
-        
+
         check_event_before_inviting(event=event, user_index=data[INDEX])
         check_user_before_inviting(user=user, event_key=event[KEY])
-        mark_user_invited(user_key=user[KEY], event=event, user_index=data[INDEX])
-        send_invite_to_user(user=user, event_key=event[KEY], user_index=data[INDEX])
-        
+        mark_user_invited(user_key=user[KEY],
+                          event=event, user_index=data[INDEX])
+        send_invite_to_user(
+            user=user, event_key=event[KEY], user_index=data[INDEX])
+
         update_user(user=user)
         update_event(event=event)
 
@@ -177,19 +181,22 @@ def resolve_invite():
 
     try:
         data = request.get_json()
-        
+
         user = fetch_user(user_key=data[USER_KEY])
         invite = check_user_before_adding(user=user, invite_index=data[INDEX])
         event = fetch_event(event_key=invite[KEY])
-        check_event_before_adding(event=event,user_key=user[KEY],user_index=invite[INDEX])
+        check_event_before_adding(
+            event=event, user_key=user[KEY], user_index=invite[INDEX])
 
         if data[IS_ACCEPTED] == True:
-            add_event_to_user(user=user, event_key=event[KEY], user_index=invite[INDEX])
-            make_user_permanent(event=event,user_key=user[KEY], user_index=invite[INDEX])
+            add_event_to_user(
+                user=user, event_key=event[KEY], user_index=invite[INDEX])
+            make_user_permanent(
+                event=event, user_key=user[KEY], user_index=invite[INDEX])
 
         make_user_uninvited(event=event, user_index=invite[INDEX])
         delete_invite(user=user, invite_index=data[INDEX])
-        
+
         update_event(event=event)
         update_user(user=user)
 
@@ -198,19 +205,18 @@ def resolve_invite():
 
     except KeyError as err:
         return jsonify(error=str(err)), 400
-    
+
     if data[IS_ACCEPTED] == True:
         return jsonify(success="User Added to Event"), 200
     else:
         return jsonify(success="Invitation Rejected"), 200
 
 
-
 @app.route("/create_bill", methods=['GET', 'POST'])
 def create_bill():
     if (not request.data):
         return jsonify(error="Send Json Data"), 400
-    
+
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
@@ -252,7 +258,7 @@ def get_event():
 def delete_bill():
     if (not request.data):
         return jsonify(error="Send Json Data"), 400
-    
+
     try:
         data = request.get_json()
         bill = fetch_bill(bill_key=data[KEY])
@@ -262,7 +268,7 @@ def delete_bill():
         remove_bill_from_event(event=event, bill=bill,  bill_idx=bill_idx)
         update_event(event=event)
         remove_bill(bill=bill)
-    
+
     except TypeError as err:
         return jsonify(error=str(err)), 400
 
