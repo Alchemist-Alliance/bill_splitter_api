@@ -52,7 +52,7 @@ class Bill:
         if drawees == None or not isinstance(drawees, list):
             raise TypeError("Drawees should be a list and not Null")
         elif not all((isinstance(drawee, int) and drawee >= 0 and drawee < user_count) for drawee in drawees):
-            raise TypeError(f"Each Drawee in Drawees list should be a int and in the range of 0 and {user_count}")
+            raise TypeError(f"Each Drawee in Drawees list should be a int and in the range of 0 and {user_count - 1}")
         else:
             # drawees.sort()
             self.drawees = drawees
@@ -61,7 +61,7 @@ class Bill:
         if payees == None or not isinstance(payees, dict):
             raise TypeError("Payees should be a list and not Null")
         elif not all(int(payee) >= 0 and int(payee) < user_count for payee in payees.keys()):
-            raise TypeError(f"Each Payee in Payees list should be a int and in the range of 0 and {user_count}")
+            raise TypeError(f"Each Payee in Payees list should be a int and in the range of 0 and {user_count - 1}")
         elif sum(payees.values()) != amount:
             raise TypeError(f"The Sum of Contributions({sum(payees.values())}) of all Payees should be equal to the Amount({amount}) of the bill")
         else:

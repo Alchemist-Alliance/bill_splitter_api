@@ -1,7 +1,6 @@
 from deta import Deta
 from os import getenv
 from dotenv import load_dotenv
-from redis import Redis
 
 
 try:
@@ -16,12 +15,6 @@ deta = Deta(DETA_PROJECT_KEY)
 REDIS_PASSWORD = getenv("REDIS_PASSWORD")
 REDIS_HOST = getenv("REDIS_HOST")
 REDIS_PORT = getenv("REDIS_PORT")
-redisClient = Redis(
-    host=REDIS_HOST,
-    port=REDIS_PORT,
-    password=REDIS_PASSWORD,
-    decode_responses=True
-)
 
 #DETA BASE NAMES
 EVENT_BASE = "event_base"
@@ -29,11 +22,13 @@ BILL_BASE = "bill_base"
 USER_BASE = "user_base"
 
 # IMPORTANT KEYWORDS converted into CONSTANTS
+USER = "user"
+EVENT = "event"
+BILL = "bill"
 KEY = "key"
 NAME = "name"
 EVENTS = "events"
 USERS = "users"
-USER = "user"
 BILLS = "bills"
 EXPENSES = "expenses"
 USER_BILLS = "user_bills"
@@ -59,8 +54,6 @@ USER_NAMES = "user_names"
 DEFAULT="default"
 SHARED_AMOUNT = "shared_amount"
 
-
-DEFAULT_TIME = 3600
 
 
 #TODO 1: split the functionality of fetch data from database, validating it and making changes to minimize DB calls

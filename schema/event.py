@@ -1,4 +1,4 @@
-from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS, CONTRIBUTIONS, SHARED_AMOUNT
+from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS, CONTRIBUTIONS, SHARED_AMOUNT, AMOUNT
 from enum import Enum
 
 class UserStatus(Enum):
@@ -26,7 +26,7 @@ class Event:
             TypeError: If the [Name] of [Event] is different datatype than [String]
             TypeError: If The List of [Users] is different datatype than [List]
             TypeError: If all the list items of [Users] are not validated properly
-            TypeError: If The List of [Bills] is different datatype than [List]
+            TypeError: If The Dictionary of [Bills] is different datatype than [Dict]
             TypeError: If all the list items of [Bills] are not validated properly
             TypeError: If the [Owner] of [Event] is different datatype than [String]
             TypeError: If the [status] is different datatype than [Integer] and within the range of 0 to 2
@@ -47,9 +47,9 @@ class Event:
             self.users = users
 
 
-        if not isinstance(bills, list):
-            raise TypeError("Bills should be a list")
-        elif not all(validate_bill(bill) == True for bill in bills):
+        if not isinstance(bills, dict):
+            raise TypeError("Bills should be a Dictionary")
+        elif not all(validate_bill(bill) == True for bill in bills.values()):
             raise TypeError("Each billKey in bills list should be a string")
         else:
             self.bills = bills
@@ -136,8 +136,8 @@ def validate_bill(bill) -> bool:
 
     Raises:
         TypeError: If the [Bill] is different datatype than dict
-        TypeError: If The Key of [Bill] is different datatype than [String]
         TypeError: If The Name of [Bill] is different datatype than [String]
+        TypeError: If The Amount of [Bill] is different datatype than [Float]
         TypeError: If The Shared_Amount of [Bill] is different datatype than [Float]
         
     Returns:
@@ -146,10 +146,10 @@ def validate_bill(bill) -> bool:
     """
     if not isinstance(bill, dict):
         raise TypeError("Bill details must shared in a dict")
-    if not isinstance(bill.get(KEY), str):
-        raise TypeError("Bill key should be string")
     if not isinstance(bill.get(NAME), str):
         raise TypeError("Bill name should be string")
+    if not isinstance(bill.get(AMOUNT), float):
+        raise TypeError("Amount should be float")
     if not isinstance(bill.get(SHARED_AMOUNT), float):
         raise TypeError("Shared Amount should be float")
     return True

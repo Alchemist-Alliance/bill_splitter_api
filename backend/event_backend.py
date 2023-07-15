@@ -1,5 +1,6 @@
-from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT, CONTRIBUTIONS, SHARED_AMOUNT, AMOUNT, DRAWEES, PAYEES
+from constant import deta, KEY, NAME, USERS, BILLS, OWNER, EVENT_BASE, EXPENSES, STATUS, DEFAULT, CONTRIBUTIONS, SHARED_AMOUNT, AMOUNT, DRAWEES, PAYEES, EVENT
 from schema.event import Event, UserStatus, EventStatus
+from backend.redis_backend import *
 events = deta.Base(EVENT_BASE)
 
 def validate_new_event(data) -> dict:
@@ -15,7 +16,7 @@ def validate_new_event(data) -> dict:
     event_obj = Event(
             name=data[NAME],
             users=[],
-            bills=[],
+            bills={},
             owner=DEFAULT,
             status=data[STATUS]
         )
@@ -33,8 +34,11 @@ def fetch_event(event_key) -> dict:
     Returns:
         dict: Event Details for the specified event_key
     """
-    events = deta.Base(EVENT_BASE)
-    event = events.get(event_key)
+    event = fetch_from_redis(Entity=EVENT, key=event_key)
+    if event is None:
+        event = events.get(event_key)
+        add_to_redis(Entity=EVENT, data=event)
+    
     return event
 
 
@@ -138,25 +142,22 @@ def check_event_before_creating_bill(event, drawees, payees) -> None:
 
 def add_bill_in_event(event, bill) -> None:
     shared_amount = bill[AMOUNT] / len(bill[DRAWEES])
-    bill_idx = len(event[BILLS])
     
-    event_bill = {
-        KEY : bill[KEY],
+    event[BILLS][bill[KEY]] = {
         NAME : bill[NAME],
+        AMOUNT : bill[AMOUNT],
         SHARED_AMOUNT : shared_amount
     }
-    
-    event[BILLS].append(event_bill)
     
     for payee in bill[PAYEES]:
         event[USERS][int(payee)][EXPENSES] += bill[PAYEES][payee]
         
         if event[USERS][int(payee)][BILLS] is None or len(event[USERS][int(payee)][BILLS]) == 0:
-            event[USERS][int(payee)][BILLS] = [bill_idx]
+            event[USERS][int(payee)][BILLS] = [bill[KEY]]
             event[USERS][int(payee)][CONTRIBUTIONS] = [bill[PAYEES][payee]]
         
         else:
-            event[USERS][int(payee)][BILLS].append(bill_idx)
+            event[USERS][int(payee)][BILLS].append(bill[KEY])
             event[USERS][int(payee)][CONTRIBUTIONS].append(bill[PAYEES][payee])
     
     
@@ -164,41 +165,42 @@ def add_bill_in_event(event, bill) -> None:
         event[USERS][drawee][EXPENSES] -= shared_amount
         
         if event[USERS][drawee][BILLS] is None or len(event[USERS][drawee][BILLS]) == 0:
-            event[USERS][drawee][BILLS] = [bill_idx]
+            event[USERS][drawee][BILLS] = [bill[KEY]]
+            event[USERS][drawee][CONTRIBUTIONS] = [0]
             
-        elif event[USERS][int(payee)][BILLS][-1] != bill_idx:
-            event[USERS][drawee][BILLS].append(bill_idx)
-            
+        elif event[USERS][drawee][BILLS][-1] != bill[KEY]:
+            event[USERS][drawee][BILLS].append(bill[KEY])
+            event[USERS][drawee][CONTRIBUTIONS].append(0)
 
     
 
 
 
-def check_event_before_removing_bill(event, bill_key) -> int:
+def check_event_before_removing_bill(event, bill_key) -> None:
     if event is None:
         raise TypeError("No Such Event Exists")
     
     if event[STATUS] == EventStatus.INACTIVE.value:
         raise TypeError("The Event is Inactive")
     
-    for bill_idx, event_bill in enumerate(event[BILLS]):
-        if event_bill[KEY] == bill_key:
-            return bill_idx
+    for event_bill in event[BILLS].keys():
+        if event_bill == bill_key:
+            return
         
     raise TypeError("No Such Bill Exists in the Event")
 
 
 
-def remove_bill_from_event(event, bill, bill_idx) -> None:
+def remove_bill_from_event(event, bill) -> None:
     shared_amount = bill[AMOUNT] / len(bill[DRAWEES])
     
-    del event[BILLS][bill_idx]
+    del event[BILLS][bill[KEY]]
     
     for payee in bill[PAYEES]:
         event[USERS][int(payee)][EXPENSES] -= bill[PAYEES][payee]
         
-        for user_bill, idx in enumerate(event[USERS][int(payee)][BILLS]):
-            if user_bill == bill_idx:
+        for idx, user_bill in enumerate(event[USERS][int(payee)][BILLS]):
+            if user_bill == bill[KEY]:
                 del event[USERS][int(payee)][BILLS][idx]
                 del event[USERS][int(payee)][CONTRIBUTIONS][idx]
                 break
@@ -206,15 +208,18 @@ def remove_bill_from_event(event, bill, bill_idx) -> None:
     for drawee in bill[DRAWEES]:
         event[USERS][drawee][EXPENSES] += shared_amount
 
-        try:
-            event[USERS][drawee].remove(bill_idx)
-        except ValueError:
-            pass
+        for idx, user_bill in enumerate(event[USERS][drawee][BILLS]):
+            if user_bill == bill[KEY]:
+                del event[USERS][drawee][BILLS][idx]
+                del event[USERS][drawee][CONTRIBUTIONS][idx]
+                break
     
 
 
 def create_new_event(event) -> dict:
+    add_to_redis(Entity=EVENT, data=event)
     return events.put(event)
 
 def update_event(event) -> dict:
+    add_to_redis(Entity=EVENT, data=event)
     return events.put(event, event[KEY])

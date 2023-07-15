@@ -36,8 +36,8 @@ def create_user():
     try:
         data = request.get_json()
         user = create_user_in_database(data)
-        redisClient.json().set(f"USER-{user[KEY]}", '$', user)
-        redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
+        # redisClient.json().set(f"USER-{user[KEY]}", '$', user)
+        # redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -56,10 +56,10 @@ def get_user():
     try:
         data = request.get_json()
         # print(data[KEY])
-        user = redisClient.json().get(name=f"USER-{data[KEY]}")
+        # user = redisClient.json().get(name=f"USER-{data[KEY]}")
         # print(user)
-        if user is None:
-            user = fetch_user(data[KEY])
+        # if user is None:
+        user = fetch_user(data[KEY])
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -157,10 +157,8 @@ def send_invite():
 
         check_event_before_inviting(event=event, user_index=data[INDEX])
         check_user_before_inviting(user=user, event_key=event[KEY])
-        mark_user_invited(user_key=user[KEY],
-                          event=event, user_index=data[INDEX])
-        send_invite_to_user(
-            user=user, event_key=event[KEY], user_index=data[INDEX])
+        mark_user_invited(user_key=user[KEY],event=event, user_index=data[INDEX])
+        send_invite_to_user(user=user, event_key=event[KEY], user_index=data[INDEX])
 
         update_user(user=user)
         update_event(event=event)
@@ -220,8 +218,9 @@ def create_bill():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
+        bill = validate_new_bill(data=data,user_count=len(event[USERS]))
         check_event_before_creating_bill(event=event, drawees=data[DRAWEES], payees=data[PAYEES])
-        bill = create_bill_in_database(data=data,user_count=len(event[USERS]))
+        bill = create_new_bill(bill)
         add_bill_in_event(event=event, bill=bill)
         update_event(event=event)
 
@@ -236,7 +235,7 @@ def create_bill():
 
 
 @app.route("/get_bill", methods=['GET', 'POST'])
-def get_event():
+def get_bill():
     if (not request.data):
         return jsonify(error="Send Json Data"), 400
 
@@ -264,8 +263,8 @@ def delete_bill():
         bill = fetch_bill(bill_key=data[KEY])
         check_bill_before_deleting(bill=bill)
         event = fetch_event(event_key=bill[EVENT_KEY])
-        bill_idx = check_event_before_removing_bill(event=event, bill_key=bill[KEY])
-        remove_bill_from_event(event=event, bill=bill,  bill_idx=bill_idx)
+        check_event_before_removing_bill(event=event, bill_key=bill[KEY])
+        remove_bill_from_event(event=event, bill=bill)
         update_event(event=event)
         remove_bill(bill=bill)
 
