@@ -1,4 +1,4 @@
-from constant import KEY, EVENT_KEY, NAME, AMOUNT, DRAWEES, PAYEES, NOTES
+from constant import EVENT_KEY, NAME, AMOUNT, DRAWEES, PAYEES, NOTES
 
 class Bill:
     def __init__(self, event_key, name, amount, drawees, payees, user_count, notes) -> None:
@@ -75,6 +75,12 @@ class Bill:
         
     
     def to_dict(self) -> dict:
+        """Converts Object of Bill Class to Dict
+
+        Returns:
+            Dict: The Bill data as a Dict
+        """
+        
         bill_dict = {
             EVENT_KEY : self.event_key,
             NAME: self.name,
