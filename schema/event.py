@@ -1,4 +1,4 @@
-from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS, CONTRIBUTIONS, SHARED_AMOUNT, AMOUNT
+from constant import EXPENSES, KEY, NAME, USERS, BILLS, OWNER, STATUS, SHARED_AMOUNT, AMOUNT
 from enum import Enum
 
 class UserStatus(Enum):
@@ -61,8 +61,8 @@ class Event:
             self.owner = owner
 
 
-        if not isinstance(status, int) or status < 0 or status > len(EventStatus):
-            raise TypeError("status should be integer in the range of 0 to 2")
+        if not isinstance(status, int) or status < 0 or status >= len(EventStatus):
+            raise TypeError(f"status should be integer in the range of 0 to {len(EventStatus) - 1}")
         else:
             self.status = status
             
@@ -83,7 +83,7 @@ def validate_user(user) -> bool:
     """Validates the data for each user stored in [Users] List in Event
 
     Args:
-        user (Dictionary): The User Data of user stored in [Users] List in Event
+        user (Dict): The User Data of user stored in [Users] List in Event
 
     Raises:
         TypeError: If the [User] is different datatype than dict
@@ -99,7 +99,7 @@ def validate_user(user) -> bool:
         TypeError: If each Contribution in Contributions is different datatype than [Float]
         
     Returns:
-        bool : True if the User Data of User stored in [Users] List in Event gets validated properly
+        Bool : True if the User Data of User stored in [Users] List in Event gets validated properly
         
     """
     
@@ -137,9 +137,9 @@ def validate_bill(bill) -> bool:
         TypeError: If The Shared_Amount of [Bill] is different datatype than [Float]
         
     Returns:
-        bool : True if the Bill Data of Bill stored in [Bills] List in Event gets validated properly
-        
+        Bool : True if the Bill Data of Bill stored in [Bills] List in Event gets validated properly
     """
+    
     if not isinstance(bill, dict):
         raise TypeError("Bill details must shared in a dict")
     if not isinstance(bill.get(NAME), str):

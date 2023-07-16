@@ -59,13 +59,21 @@ def fetch_user(user_key) -> dict:
 
     Args:
         user_key ([String]): Unique Key for the User
+        
+    Raises:
+        TypeError: If there is no User in the database for the provided User Key
 
     Returns:
         Dict: User Details for the specified user_key
     """
     
-    user = users.get(user_key)
-    add_to_redis(Entity=USER, data=user)
+    user = fetch_from_redis(Entity=USER, key=user_key)
+    if user is None:
+        user = users.get(user_key)
+        if user is None:
+            raise TypeError("No Such User Exists")
+        add_to_redis(Entity=USER, data=user)
+        
     return user
 
 

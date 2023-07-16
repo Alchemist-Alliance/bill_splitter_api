@@ -178,7 +178,7 @@ def resolve_invite():
         user = fetch_user(user_key=data[USER_KEY])
         invite = check_user_before_adding(user=user, invite_index=data[INDEX])
         event = fetch_event(event_key=invite[KEY])
-        check_event_before_adding(
+        check_event_before_making_user_permanent(
             event=event, user_key=user[KEY], user_index=invite[INDEX])
 
         if data[IS_ACCEPTED] == True:
