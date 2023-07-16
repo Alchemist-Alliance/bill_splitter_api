@@ -9,7 +9,7 @@ def validate_new_event(data) -> dict:
     """Creates the event for the provided details in the database
 
     Args:
-        data (Dictionary): Contains all the required data for creating event according to the Event schema
+        data (Dict): Contains all the required data for creating event according to the Event schema
 
     Returns:
         dict: Event Details that were stored in the database
@@ -24,6 +24,19 @@ def validate_new_event(data) -> dict:
         )
     event_dict = event_obj.to_dict()
     return event_dict
+
+
+def create_new_event(event) -> dict:
+    if event[STATUS] == EventStatus.TEMPORARY.value:
+        event_data = events.put(data=event,expire_in=EXPIRE_TIME)
+    else:
+        event_data = events.put(data=event)
+    add_to_redis(Entity=EVENT, data=event_data)
+    return event_data
+
+def update_event(event) -> dict:
+    add_to_redis(Entity=EVENT, data=event)
+    return events.put(event, event[KEY])
 
 
 
@@ -191,16 +204,3 @@ def remove_bill_from_event(event, bill) -> None:
         
         if event[USERS][drawee][BILLS].get(bill[KEY]) != None:
             del event[USERS][drawee][BILLS][bill[KEY]]
-
-
-def create_new_event(event) -> dict:
-    if event[STATUS] == EventStatus.TEMPORARY.value:
-        event_data = events.put(data=event,expire_in=EXPIRE_TIME)
-    else:
-        event_data = events.put(data=event)
-    add_to_redis(Entity=EVENT, data=event_data)
-    return event_data
-
-def update_event(event) -> dict:
-    add_to_redis(Entity=EVENT, data=event)
-    return events.put(event, event[KEY])

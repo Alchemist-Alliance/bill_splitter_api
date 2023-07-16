@@ -35,7 +35,8 @@ def create_user():
 
     try:
         data = request.get_json()
-        user = create_user_in_database(data)
+        user = validate_new_user(data)
+        user = create_new_user(user)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -43,7 +44,7 @@ def create_user():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="User Created!"), 200
+    return jsonify(success="User Created!", user=user), 200
 
 
 @app.route("/get_user", methods=['GET', 'POST'])

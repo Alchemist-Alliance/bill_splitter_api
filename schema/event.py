@@ -26,7 +26,7 @@ class Event:
             TypeError: If the [Name] of [Event] is different datatype than [String]
             TypeError: If The List of [Users] is different datatype than [List]
             TypeError: If all the list items of [Users] are not validated properly
-            TypeError: If The Dictionary of [Bills] is different datatype than [Dict]
+            TypeError: If The Dict of [Bills] is different datatype than [Dict]
             TypeError: If all the list items of [Bills] are not validated properly
             TypeError: If the [Owner] of [Event] is different datatype than [String]
             TypeError: If the [status] is different datatype than [Integer] and within the range of 0 to 2
@@ -48,7 +48,7 @@ class Event:
 
 
         if not isinstance(bills, dict):
-            raise TypeError("Bills should be a Dictionary")
+            raise TypeError("Bills should be a Dict")
         elif not all(validate_bill(bill) == True for bill in bills.values()):
             raise TypeError("Each billKey in bills list should be a string")
         else:
@@ -116,7 +116,7 @@ def validate_user(user) -> bool:
     if user.get(STATUS) < 0 or user.get(STATUS) >= len(UserStatus):
         raise TypeError(f"User Status should be in the range of 0 to {len(UserStatus) - 1}")
     if not isinstance(user.get(BILLS), dict):
-        raise TypeError("User Bills should be a Dictionary")
+        raise TypeError("User Bills should be a dict")
     if not all(isinstance(bill_keys, str) for bill_keys in user.get(BILLS).keys()):
         raise TypeError("All keys in bills dict must be string")
     if not all(isinstance(bill_values, float) for bill_values in user.get(BILLS).values()):
@@ -128,7 +128,7 @@ def validate_bill(bill) -> bool:
     """Validates the data for each bill stored in [Bills] List in Event
 
     Args:
-        bill (Dictionary): The Bill Data of bill stored in [Bills] List in Event
+        bill (Dict): The Bill Data of bill stored in [Bills] List in Event
 
     Raises:
         TypeError: If the [Bill] is different datatype than dict

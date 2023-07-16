@@ -61,6 +61,12 @@ class User:
 
 
     def to_dict(self) -> dict:
+        """Converts Object of User Class to Dict
+
+        Returns:
+            Dict: The User data as a Dict
+        """
+        
         user_dict = {
             KEY : self.key,
             NAME : self.name,
@@ -75,12 +81,15 @@ def validate_event(event) -> bool:
     """Validates the data for each event stored in [Events] List in User
 
     Args:
-        event (Dictionary): The Event Data of event stored in [Events] List in User
+        event (Dict): The Event Data of event stored in [Events] List in User
 
     Raises:
         TypeError: If the [Event] is different datatype than dict
         TypeError: If The Key of [User] is different datatype than [String]
         TypeError: If The Index of [User] is different datatype than [String]
+        
+    Returns:
+        Bool: True if the Event data gets validated properly  
     """
     
     if not isinstance(event, dict):
