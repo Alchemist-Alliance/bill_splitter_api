@@ -36,8 +36,6 @@ def create_user():
     try:
         data = request.get_json()
         user = create_user_in_database(data)
-        # redisClient.json().set(f"USER-{user[KEY]}", '$', user)
-        # redisClient.expire(name=f"USER-{user[KEY]}", time=DEFAULT_TIME)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -55,10 +53,6 @@ def get_user():
 
     try:
         data = request.get_json()
-        # print(data[KEY])
-        # user = redisClient.json().get(name=f"USER-{data[KEY]}")
-        # print(user)
-        # if user is None:
         user = fetch_user(data[KEY])
 
     except TypeError as err:
