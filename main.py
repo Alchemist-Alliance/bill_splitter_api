@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={
-     r"/*": {"origins": ["http://localhost:3000", "https://bill-splitter-frontend-alpha.vercel.app"]}})
+     r"/*": {"origins": ["http://localhost:3000", "https://billicious-beta.vercel.app"]}})
 
 # swagger configs
 SWAGGER_URL = "/swagger"
