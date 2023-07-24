@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={
-     r"/*": {"origins": ["http://localhost:3000", "https://bill-splitter-frontend-alpha.vercel.app"]}})
+     r"/*": {"origins": ["http://localhost:3000", "https://billicious-beta.vercel.app"]}})
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -83,10 +83,10 @@ def create_event():
             user = fetch_user(user_key=data[OWNER])
             check_user_before_creating_event(user)
             update_owner_for_event(event=event, owner=data[OWNER])
-            make_user_permanent(event=event,user_key=user[KEY], user_index=0)
-        
+            make_user_permanent(event=event, user_key=user[KEY], user_index=0)
+
         event = create_new_event(event)
-        
+
         if data[STATUS] == EventStatus.PERMANENT.value:
             add_event_to_user(user=user, event_key=event[KEY], user_index=0)
             update_user(user)
@@ -97,7 +97,7 @@ def create_event():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Event Created!" ,event=event), 200
+    return jsonify(success="Event Created!", event=event), 200
 
 
 @app.route("/get_event", methods=['GET', 'POST'])
@@ -152,8 +152,10 @@ def send_invite():
 
         check_event_before_inviting(event=event, user_index=data[INDEX])
         check_user_before_inviting(user=user, event_key=event[KEY])
-        mark_user_invited(user_key=user[KEY],event=event, user_index=data[INDEX])
-        send_invite_to_user(user=user, event_key=event[KEY], user_index=data[INDEX])
+        mark_user_invited(user_key=user[KEY],
+                          event=event, user_index=data[INDEX])
+        send_invite_to_user(
+            user=user, event_key=event[KEY], user_index=data[INDEX])
 
         update_user(user=user)
         update_event(event=event)
@@ -213,7 +215,7 @@ def create_bill():
     try:
         data = request.get_json()
         event = fetch_event(event_key=data[EVENT_KEY])
-        bill = validate_new_bill(data=data,user_count=len(event[USERS]))
+        bill = validate_new_bill(data=data, user_count=len(event[USERS]))
         check_event_before_creating_bill(event=event)
         bill = create_new_bill(bill, event)
         add_bill_in_event(event=event, bill=bill)
@@ -232,7 +234,6 @@ def create_bill():
     return jsonify(success="Bill Created!",bill_key=bill[KEY], expenses=expenses), 200
 
 
-
 @app.route("/get_bill", methods=['GET', 'POST'])
 def get_bill():
     if (not request.data):
@@ -249,7 +250,6 @@ def get_bill():
         return jsonify(error=str(err)), 400
 
     return jsonify(bill=bill), 200
-
 
 
 @app.route("/delete_bill", methods=['GET', 'POST'])
@@ -276,6 +276,6 @@ def delete_bill():
 
     return jsonify(success="Bill Deleted!", expenses=expenses), 200
 
-
-if __name__ == '__main__':
-    app.run(debug=True)
+# Only for testing purpose
+# if __name__ == '__main__':
+#     app.run(debug=True)
