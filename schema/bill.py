@@ -40,10 +40,10 @@ class Bill:
             self.name = name
 
 
-        if not isinstance(amount, float):
-            raise TypeError("Amount should be float and not Null")
+        if not isinstance(amount, str):
+            raise TypeError("Amount should be string and not Null")
         else:
-            self.amount = amount
+            self.amount = float(amount)
         
         if not isinstance(user_count, int):
             raise TypeError("User_Count should be int and not Null")
@@ -54,19 +54,33 @@ class Bill:
         elif not all((isinstance(drawee, int) and drawee >= 0 and drawee < user_count) for drawee in drawees):
             raise TypeError(f"Each Drawee in Drawees list should be a int and in the range of 0 and {user_count - 1}")
         else:
-            # drawees.sort()
             self.drawees = drawees
 
 
         if payees == None or not isinstance(payees, dict):
             raise TypeError("Payees should be a list and not Null")
-        elif not all(int(payee) >= 0 and int(payee) < user_count for payee in payees.keys()):
-            raise TypeError(f"Each Payee in Payees list should be a int and in the range of 0 and {user_count - 1}")
-        elif sum(payees.values()) != amount:
-            raise TypeError(f"The Sum of Contributions({sum(payees.values())}) of all Payees should be equal to the Amount({amount}) of the bill")
+        
+        total_contribution = 0.0
+        for payee, contribution in payees.items():
+            if not isinstance(payee, str):
+                raise TypeError("Each Payee in Payees list should be a str")
+            
+            if not isinstance(contribution, str):
+                raise TypeError("Each Contribution of Payees should be str")
+            
+            contribution = float(contribution)
+            payee = int(payee)
+            
+            if payee < 0 and payee >= user_count:
+                print(payee)
+                raise TypeError(f"Each Payee in Payees list should be in the range of 0 to {user_count - 1}")
+            
+            total_contribution += contribution
+            
+        if total_contribution != self.amount:
+            raise TypeError(f"The sum of Contributions({total_contribution}) of all Payees should be equal to the Amount({amount}) of the bill")
         else:
-            # dict(sorted(payees.items()))
-            self.payees = payees
+            self.payees = {payee:float(contribution) for payee,contribution in payees.items()}
         
             
         if not isinstance(notes,str):

@@ -137,7 +137,7 @@ def add_new_user():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="User Added!",event=event), 200
+    return jsonify(success="User Added!",users=event[USERS]), 200
 
 
 @app.route("/send_invite", methods=['GET', 'POST'])
@@ -224,8 +224,11 @@ def create_bill():
 
     except KeyError as err:
         return jsonify(error=str(err)), 400
+    
+    except ValueError as err:
+        return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Created!", bill=bill), 200
+    return jsonify(success="Bill Created!",bill_key=bill[KEY], users=event[USERS]), 200
 
 
 
@@ -269,7 +272,7 @@ def delete_bill():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Deleted!"), 200
+    return jsonify(success="Bill Deleted!", users=event[USERS]), 200
 
 
 if __name__ == '__main__':
