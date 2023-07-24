@@ -218,6 +218,7 @@ def create_bill():
         bill = create_new_bill(bill, event)
         add_bill_in_event(event=event, bill=bill)
         update_event(event=event)
+        expenses = get_updated_expenses(event=event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -228,7 +229,7 @@ def create_bill():
     except ValueError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Created!",bill_key=bill[KEY], users=event[USERS]), 200
+    return jsonify(success="Bill Created!",bill_key=bill[KEY], expenses=expenses), 200
 
 
 
@@ -265,6 +266,7 @@ def delete_bill():
         remove_bill_from_event(event=event, bill=bill)
         update_event(event=event)
         remove_bill(bill=bill)
+        expenses = get_updated_expenses(event=event)
 
     except TypeError as err:
         return jsonify(error=str(err)), 400
@@ -272,7 +274,7 @@ def delete_bill():
     except KeyError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Deleted!", users=event[USERS]), 200
+    return jsonify(success="Bill Deleted!", expenses=expenses), 200
 
 
 if __name__ == '__main__':

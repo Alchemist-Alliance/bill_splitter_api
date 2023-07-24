@@ -368,3 +368,20 @@ def remove_bill_from_event(event, bill) -> None:
         
         if event[USERS][drawee][BILLS].get(bill[KEY]) != None:
             del event[USERS][drawee][BILLS][bill[KEY]]
+
+
+def get_updated_expenses(event) -> list :
+    """To reduce the payload of request, it only returns the updated expenses for all users of event
+
+    Args:
+        event (Dict): The Event, whose users' expenses are returned
+
+    Returns:
+        list: Expenses of all the Users in an Event
+    """
+    
+    expenses = []
+    for user in event[USERS]:
+        expenses.append(user[EXPENSES])
+    
+    return expenses
