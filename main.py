@@ -278,5 +278,5 @@ def delete_bill():
 
 
 # Only for testing purpose
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
