@@ -263,7 +263,7 @@ def check_event_before_creating_bill(event) -> None:
         raise TypeError("The Event is Inactive")
 
 
-def add_bill_in_event(event, bill) -> None:
+def add_bill_in_event(event, bill) -> float:
     """Add the Bill to the Event 
 
     Args:
@@ -273,6 +273,9 @@ def add_bill_in_event(event, bill) -> None:
     Raises:
         TypeError: If all the payee in the Payees List of Bill are not Active Users 
         TypeError: If all the drawee in the Drawees List of Bill are not Active Users 
+        
+    Returns:
+        Float: The amount paid by each drawee 
     """
     
     #! the amount to be shared in between all the drawees
@@ -308,6 +311,8 @@ def add_bill_in_event(event, bill) -> None:
 
         if event[USERS][drawee][BILLS].get(bill[KEY]) == None:
             event[USERS][drawee][BILLS][bill[KEY]] = 0
+            
+    return shared_amount
 
 
 

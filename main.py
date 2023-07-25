@@ -218,7 +218,7 @@ def create_bill():
         bill = validate_new_bill(data=data, user_count=len(event[USERS]))
         check_event_before_creating_bill(event=event)
         bill = create_new_bill(bill, event)
-        add_bill_in_event(event=event, bill=bill)
+        shared_amount = add_bill_in_event(event=event, bill=bill)
         update_event(event=event)
         expenses = get_updated_expenses(event=event)
 
@@ -231,7 +231,7 @@ def create_bill():
     except ValueError as err:
         return jsonify(error=str(err)), 400
 
-    return jsonify(success="Bill Created!", bill_key=bill[KEY], expenses=expenses), 200
+    return jsonify(success="Bill Created!", bill_key=bill[KEY], expenses=expenses, shared_amount=shared_amount), 200
 
 
 @app.route("/get_bill", methods=['GET', 'POST'])
