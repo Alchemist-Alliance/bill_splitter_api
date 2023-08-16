@@ -251,6 +251,23 @@ def get_bill():
 
     return jsonify(bill=bill), 200
 
+@app.route("/update_drawees", methods=['GET', 'POST'])
+def update_drawees():
+    if (not request.data):
+        return jsonify(error="Send Json Data"), 400
+
+    try:
+        data = request.get_json()
+        bill = fetch_bill(data[KEY])
+
+    except TypeError as err:
+        return jsonify(error=str(err)), 400
+
+    except KeyError as err:
+        return jsonify(error=str(err)), 400
+
+    return jsonify(bill=bill), 200
+
 
 @app.route("/delete_bill", methods=['GET', 'POST'])
 def delete_bill():
