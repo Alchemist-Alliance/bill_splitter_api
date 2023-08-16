@@ -8,7 +8,7 @@ from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, resources={
-     r"/*": {"origins": ["http://localhost:3000", "https://billicious-beta.vercel.app"]}})
+     r"/*": {"origins": ["http://localhost:3000", "https://billicious-beta.vercel.app", "https://billicious.vercel.app"]}})
 
 # swagger configs
 SWAGGER_URL = "/swagger"
@@ -250,6 +250,7 @@ def get_bill():
         return jsonify(error=str(err)), 400
 
     return jsonify(bill=bill), 200
+
 
 @app.route("/update_drawees", methods=['GET', 'POST'])
 def update_drawees():
